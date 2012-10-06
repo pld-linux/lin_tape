@@ -3,7 +3,7 @@
 %bcond_without	dist_kernel	# allow non-distribution kernel
 %bcond_with	verbose		# verbose build (V=1)
 #
-%define		rel	1
+%define		rel	2
 %define		pname	lin_tape
 Summary:	IBM Tape SCSI Device Driver for Linux
 Name:		%{pname}%{_alt_kernel}
@@ -14,6 +14,7 @@ Group:		Base/Kernel
 Source0:	%{pname}-%{version}.tgz
 # Source0-md5:	675822326c2b12390b5164a4e2b14aec
 Patch0:		use-module-dir.patch
+Patch1:		hp-support.patch
 # System Storage, Tape systems, Tape drivers and software, Tape device drivers (Linux)
 URL:		http://www.ibm.com/support/fixcentral/
 %{?with_dist_kernel:BuildRequires:	kernel%{_alt_kernel}-module-build >= 3:2.6.20.2}
@@ -43,6 +44,7 @@ devices to Linux compatible platforms.
 %prep
 %setup -q -n %{pname}-%{version}
 %patch0 -p1
+%patch1 -p1
 %ifarch %ix86 ia64
 proc="Intel"
 %endif
