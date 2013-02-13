@@ -36,9 +36,9 @@ Requires(postun):	%releq_kernel
 %endif
 
 %description -n kernel%{_alt_kernel}-scsi-lin_tape
-The IBM Tape Device Driver, lin_tape, product is a device driver that
-provides attachment for the IBM TotalStorage and System Storage tape
-devices to Linux compatible platforms.
+The IBM Tape Device Driver is a device driver that provides attachment
+for the IBM TotalStorage and System Storage tape devices to Linux
+compatible platforms.
 
 %prep
 %setup -q -n %{pname}-%{version}
