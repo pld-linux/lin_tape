@@ -1,10 +1,11 @@
 diff -ur lin_tape-2.1.0/lin_tape_scsi_config.c lin_tape-2.1.0-3.10/lin_tape_scsi_config.c
 --- lin_tape-2.1.0/lin_tape_scsi_config.c	2013-06-12 23:07:31.000000000 +0200
 +++ lin_tape-2.1.0-3.10/lin_tape_scsi_config.c	2013-08-25 14:24:13.053537972 +0200
-@@ -3150,6 +3150,30 @@
+@@ -3150,6 +3150,31 @@
  	return;
  } /* lin_tape_delete_tsm_pseudo() */
  
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,0)
 +static int tape_proc_open(struct inode *inode, struct file *file)
 +{
 +	return single_open(file, tape_read_proc, PDE_DATA(inode));
@@ -28,489 +29,623 @@ diff -ur lin_tape-2.1.0/lin_tape_scsi_config.c lin_tape-2.1.0-3.10/lin_tape_scsi
 +	.llseek         = seq_lseek,
 +	.release        = single_release,
 +};
-+
++#endif
  /*******************************************************************************
  *                                                                              *
  *  NAME: lin_tape_create_proc                                                  *
-@@ -3167,42 +3191,16 @@
+@@ -3167,42 +3191,56 @@
  	DbgPrint(("lin_tape: lin_tape_create_proc entry\n"));
  
  	WRITE_LOCK(&lin_tape_lock);
--	if(!tape_proc_entry) {
--		tape_proc_entry =
--			create_proc_entry("scsi/IBMtape", 0, NULL);
--
--		if(!tape_proc_entry) {
--			DbgPrint(("lin_tape: cannot initialize "\
--				"/proc/scsi/IBMtape\n"));
--			goto EXIT_LABEL;
--		} /* if */
--
--		tape_proc_entry->read_proc = tape_read_proc;
--#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30)
--		tape_proc_entry->owner = THIS_MODULE;
--#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,24)
--		tape_proc_entry->get_info = NULL;
--#endif
--#endif
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 	if(!tape_proc_entry) {
+ 		tape_proc_entry =
+ 			create_proc_entry("scsi/IBMtape", 0, NULL);
+ 
+ 		if(!tape_proc_entry) {
+ 			DbgPrint(("lin_tape: cannot initialize "\
+ 				"/proc/scsi/IBMtape\n"));
+ 			goto EXIT_LABEL;
+ 		} /* if */
+ 
+ 		tape_proc_entry->read_proc = tape_read_proc;
+ #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30)
+ 		tape_proc_entry->owner = THIS_MODULE;
+ #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,24)
+ 		tape_proc_entry->get_info = NULL;
+ #endif
+ #endif
++#else
 +	if (!proc_create("scsi/IBMtape", 0, NULL, &tape_proc_fops)) {
 +		DbgPrint(("lin_tape: cannot initialize "\
 +			"/proc/scsi/IBMtape\n"));
 +		goto EXIT_LABEL;
++#endif
  	} /* if */
  
--	if(!changer_proc_entry) {
--		changer_proc_entry =
--			create_proc_entry("scsi/IBMchanger", 0, NULL);
--
--		if(!changer_proc_entry) {
--			DbgPrint(("lin_tape: cannot initialize "\
--				"/proc/scsi/IBMchanger\n"));
--			goto EXIT_LABEL;
--		} /* if */
--
--		changer_proc_entry->read_proc = changer_read_proc;
--#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30)
--		changer_proc_entry->owner = THIS_MODULE;
--#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,24)
--		changer_proc_entry->get_info = NULL;
--#endif
--#endif
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 	if(!changer_proc_entry) {
+ 		changer_proc_entry =
+ 			create_proc_entry("scsi/IBMchanger", 0, NULL);
+ 
+ 		if(!changer_proc_entry) {
+ 			DbgPrint(("lin_tape: cannot initialize "\
+ 				"/proc/scsi/IBMchanger\n"));
+ 			goto EXIT_LABEL;
+ 		} /* if */
+ 
+ 		changer_proc_entry->read_proc = changer_read_proc;
+ #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30)
+ 		changer_proc_entry->owner = THIS_MODULE;
+ #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,24)
+ 		changer_proc_entry->get_info = NULL;
+ #endif
+ #endif
++#else
 +	if (!proc_create("scsi/IBMchanger", 0, NULL, &changer_proc_fops)) {
 +		DbgPrint(("lin_tape: cannot initialize "\
 +			"/proc/scsi/IBMchanger\n"));
 +		goto EXIT_LABEL;
++#endif
  	} /* if */
  
  EXIT_LABEL:
-@@ -3229,15 +3227,8 @@
+@@ -3229,15 +3227,20 @@
  {
  	WRITE_LOCK(&lin_tape_lock);
  
--	if(tape_proc_entry) {
--		remove_proc_entry("scsi/IBMtape", NULL);
--		tape_proc_entry = NULL;
--	} /* if */
--
--	if(changer_proc_entry) {
--		remove_proc_entry("scsi/IBMchanger", NULL);
--		changer_proc_entry = NULL;
--	} /* if */
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 	if(tape_proc_entry) {
+ 		remove_proc_entry("scsi/IBMtape", NULL);
+ 		tape_proc_entry = NULL;
+ 	} /* if */
+ 
+ 	if(changer_proc_entry) {
+ 		remove_proc_entry("scsi/IBMchanger", NULL);
+ 		changer_proc_entry = NULL;
+ 	} /* if */
++#else
 +	remove_proc_entry("scsi/IBMtape", NULL);
 +	remove_proc_entry("scsi/IBMchanger", NULL);
++#endif
  
  	WRITE_UNLOCK(&lin_tape_lock);
  
-@@ -3262,52 +3253,36 @@
- *  RETURNS: 0 on success or error                                              *
+@@ -3262,51 +3253,80 @@
  *                                                                              *
  *******************************************************************************/
--
--static int tape_read_proc(char* buffer, char** start, off_t offset, int length,
--	int* eof, void* data)
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ static int tape_read_proc(char* buffer, char** start, off_t offset, int length,
+ 	int* eof, void* data)
++#else
 +static int tape_read_proc(struct seq_file *m, void* data)
++#endif
  {
--	int buf_offset = 0, i = 0, start_dev = 0, found = 0, linelen = 0;
--	unchar* model = NULL, * pre_buf = NULL;
--	unchar temp_buf[96];
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 	int buf_offset = 0, i = 0, start_dev = 0, found = 0, linelen = 0;
+ 	unchar* model = NULL, * pre_buf = NULL;
+ 	unchar temp_buf[96];
++#else
 +	int i = 0, found = 0;
 +	unchar* model = NULL;
++#endif
  	char* sn = NULL;
  	boolean tape_des_locked = False;
  
  	DbgPrint(("lin_tape: tape_read_proc entry\n"));
  
  	model = kmalloc(12, GFP_KERNEL);
--	pre_buf = kmalloc(ONE_K / 4, GFP_KERNEL);
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 	pre_buf = kmalloc(ONE_K / 4, GFP_KERNEL);
++#endif
  	sn = kmalloc(MaxSerialNumberSize + 1, GFP_KERNEL);
--	if(!model || !pre_buf || !sn || !buffer || !start || !eof) {
--		if(start) *start = buffer;
--		if(eof) *eof = True;
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 	if(!model || !pre_buf || !sn || !buffer || !start || !eof) {
+ 		if(start) *start = buffer;
+ 		if(eof) *eof = True;
++#else
 +	if(!model || !sn) {
++#endif
  		goto EXIT_LABEL;
  	} /* if */
  
--	memset(temp_buf, '\0', 96);
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 	memset(temp_buf, '\0', 96);
++#endif
  	memset(model, '\0', 12);
--	memset(pre_buf, '\0', ONE_K / 4);
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 	memset(pre_buf, '\0', ONE_K / 4);
++#endif
  	memset(sn, '\0', MaxSerialNumberSize + 1);
  
  	i = 0;
  
--	if(!offset && rd_pc_initial(buffer, &buf_offset, length, start, False))
--		goto EXIT_LABEL;
--
--	if(rd_pc_start_dev(&start_dev, eof, offset, buffer, &buf_offset, False))
--		goto EXIT_LABEL;
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 	if(!offset && rd_pc_initial(buffer, &buf_offset, length, start, False))
+ 		goto EXIT_LABEL;
+ 
+ 	if(rd_pc_start_dev(&start_dev, eof, offset, buffer, &buf_offset, False))
+ 		goto EXIT_LABEL;
++#else
 +	rd_pc_initial(m, False);
++#endif
  
  	READ_LOCK(&tape_des_lock);
  	tape_des_locked = True;
  
  	if(!tape_devs) {
--		*eof = True;
--		if(buf_offset == length) buf_offset--;
--		buf_offset += sprintf(&buffer[buf_offset], "\n");
--		*start = buffer;
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 		*eof = True;
+ 		if(buf_offset == length) buf_offset--;
+ 		buf_offset += sprintf(&buffer[buf_offset], "\n");
+ 		*start = buffer;
++#endif
  		goto EXIT_LABEL;
  	} /* if */
  
--	for(i = start_dev; i < MaxLinTapeDevices; i++) {
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 	for(i = start_dev; i < MaxLinTapeDevices; i++) {
++#else
 +	for(i = 0; i < MaxLinTapeDevices; i++) {
++#endif
  		if(!tape_devs[i] || !tape_devs[i]->dev_obj) continue;
  
  		found = False;
-@@ -3326,8 +3301,7 @@
+@@ -3326,8 +3301,12 @@
  			sn[strlen(sn) - 1] == '\t'))
  			sn[strlen(sn) - 1] = '\0';
  
--		linelen = snprintf(pre_buf, ONE_K / 4,
--			"\n%-8d%-12s%-18s%-16s%-16s%-10s",
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 		linelen = snprintf(pre_buf, ONE_K / 4,
+ 			"\n%-8d%-12s%-18s%-16s%-16s%-10s",
++#else
 +		seq_printf(m, "%-8d%-12s%-18s%-16s",
++#endif
  			i,
  			model,
  
-@@ -3335,12 +3309,12 @@
+@@ -3335,12 +3309,22 @@
  			tape_devs[i]->serial_num_len ? sn : "NA",
  
  			tape_devs[i]->ghost_device ? "" :
--			found ? tape_devs[i]->pname : "NA",
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 			found ? tape_devs[i]->pname : "NA",
++#else
 +			found ? tape_devs[i]->pname : "NA");
++#endif
  
--			tape_devs[i]->ghost_device ? ""       :
--			scsi_addr_str(tape_devs[i], temp_buf,
--				False),
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 			tape_devs[i]->ghost_device ? ""       :
+ 			scsi_addr_str(tape_devs[i], temp_buf,
+ 				False),
++#else
 +		if (!tape_devs[i]->ghost_device)
 +			scsi_addr_str(tape_devs[i], m, False);
  
 +		seq_printf(m, "%-10s\n",
++#endif
  			tape_devs[i]->ghost_device ? ""       :
  			!found ? "NA"                         :
  			!tape_devs[i]->serial_num_len ? "NA"  :
-@@ -3349,45 +3323,23 @@
+@@ -3349,45 +3323,59 @@
  			tape_devs[i]->isPrimary ? "Primary"   :
  			"Alternate");
  
--		if(buf_offset > length) {
--			buf_offset = length;
--			break;
--		} else if(buf_offset + linelen >= length) {
--			memset(&buffer[buf_offset], ' ', length - buf_offset);
--			buf_offset = length;
--			break;
--		} /* if */
--
--		buf_offset += sprintf(&buffer[buf_offset], "%s", pre_buf);
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 		if(buf_offset > length) {
+ 			buf_offset = length;
+ 			break;
+ 		} else if(buf_offset + linelen >= length) {
+ 			memset(&buffer[buf_offset], ' ', length - buf_offset);
+ 			buf_offset = length;
+ 			break;
+ 		} /* if */
+ 
+ 		buf_offset += sprintf(&buffer[buf_offset], "%s", pre_buf);
++#endif
  		tape_devs[i]->proc_read = True;
  	} /* for */
  
  	tape_des_locked = False;
  	READ_UNLOCK(&tape_des_lock);
  
--	if(i == start_dev || i >= MaxLinTapeDevices) {
--		if(buf_offset == length) buf_offset--;
--		buf_offset += sprintf(&buffer[buf_offset], "\n");
--		*eof = True;
--		if(i >= MaxLinTapeDevices) *start = buffer;
--		goto EXIT_LABEL;
--	} /* if */
--
--	*start = buffer;
--
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 	if(i == start_dev || i >= MaxLinTapeDevices) {
+ 		if(buf_offset == length) buf_offset--;
+ 		buf_offset += sprintf(&buffer[buf_offset], "\n");
+ 		*eof = True;
+ 		if(i >= MaxLinTapeDevices) *start = buffer;
+ 		goto EXIT_LABEL;
+ 	} /* if */
+ 
+ 	*start = buffer;
++#endif
+ 
  EXIT_LABEL:
  
--	if(pre_buf) kfree(pre_buf);
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 	if(pre_buf) kfree(pre_buf);
++#endif
  	if(model) kfree(model);
  	if(sn) kfree(sn);
  
  	if(tape_des_locked) READ_UNLOCK(&tape_des_lock);
  	tape_des_locked = False;
  
--	if(buf_offset == 1 && *eof) buf_offset = 0;
--	DbgPrint(("tape_read_proc exit: %d\n", buf_offset));
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 	if(buf_offset == 1 && *eof) buf_offset = 0;
+ 	DbgPrint(("tape_read_proc exit: %d\n", buf_offset));
++#else
 +	DbgPrint(("tape_read_proc exit:\n"));
++#endif
  
--	return buf_offset;
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 	return buf_offset;
++#else
 +	return 0;
++#endif
  } /* tape_read_proc() */
  
  /*******************************************************************************
-@@ -3409,12 +3361,10 @@
+@@ -3409,12 +3361,21 @@
  *                                                                              *
  *******************************************************************************/
  
--static int changer_read_proc(char* buffer, char** start, off_t offset,
--				int length, int* eof, void* data)
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ static int changer_read_proc(char* buffer, char** start, off_t offset,
+ 				int length, int* eof, void* data)
++#else
 +static int changer_read_proc(struct seq_file *m, void* data)
++#endif
  {
--	int buf_offset = 0, i = 0, start_dev = 0, found = 0, linelen = 0;
--	unchar* model = NULL, * pre_buf = NULL;
--	unchar temp_buf[96];
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 	int buf_offset = 0, i = 0, start_dev = 0, found = 0, linelen = 0;
+ 	unchar* model = NULL, * pre_buf = NULL;
+ 	unchar temp_buf[96];
++#else
 +	int i = 0, found = 0;
 +	unchar* model = NULL;
++#endif
  	char* sn = NULL;
  	boolean changer_des_locked = False;
  
-@@ -3423,37 +3373,24 @@
+@@ -3423,37 +3373,57 @@
  	i = 0;
  
  	model = kmalloc(12, GFP_KERNEL);
--	pre_buf = kmalloc(ONE_K / 4, GFP_KERNEL);
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 	pre_buf = kmalloc(ONE_K / 4, GFP_KERNEL);
++#endif
  	sn = kmalloc(MaxSerialNumberSize + 1, GFP_KERNEL);
--	if(!model || !pre_buf || !sn || !buffer || !start || !eof) {
--		if(start) *start = buffer;
--		if(eof) *eof = True;
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 	if(!model || !pre_buf || !sn || !buffer || !start || !eof) {
+ 		if(start) *start = buffer;
+ 		if(eof) *eof = True;
++#else
 +	if(!model || !sn) {
++#endif
  		goto EXIT_LABEL;
  	} /* if */
  
--	memset(temp_buf, '\0', 96);
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 	memset(temp_buf, '\0', 96);
++#endif
  	memset(model, '\0', 12);
--	memset(pre_buf, '\0', ONE_K / 4);
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 	memset(pre_buf, '\0', ONE_K / 4);
++#endif
  	memset(sn, '\0', MaxSerialNumberSize + 1);
  
--	if(!offset && rd_pc_initial(buffer, &buf_offset, length, start, True))
--		goto EXIT_LABEL;
--
--	if(rd_pc_start_dev(&start_dev, eof, offset, buffer, &buf_offset, True))
--		goto EXIT_LABEL;
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 	if(!offset && rd_pc_initial(buffer, &buf_offset, length, start, True))
+ 		goto EXIT_LABEL;
+ 
+ 	if(rd_pc_start_dev(&start_dev, eof, offset, buffer, &buf_offset, True))
+ 		goto EXIT_LABEL;
++#else
 +	rd_pc_initial(m, True);
++#endif
  
  	READ_LOCK(&changer_des_lock);
  	changer_des_locked = True;
  
  	if(!changer_devs) {
--		*eof = True;
--		if(buf_offset == length) buf_offset--;
--		buf_offset += sprintf(&buffer[buf_offset], "\n");
--		*start = buffer;
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 		*eof = True;
+ 		if(buf_offset == length) buf_offset--;
+ 		buf_offset += sprintf(&buffer[buf_offset], "\n");
+ 		*start = buffer;
++#endif
  		goto EXIT_LABEL;
  	} /* if */
  
--	for(i = start_dev; i < MaxLinTapeChangerDevices; i++) {
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 	for(i = start_dev; i < MaxLinTapeChangerDevices; i++) {
++#else
 +	for(i = 0; i < MaxLinTapeChangerDevices; i++) {
++#endif
  		if(!changer_devs[i] || !changer_devs[i]->dev_obj) continue;
  
  		found = False;
-@@ -3472,8 +3409,7 @@
+@@ -3472,8 +3409,12 @@
  			sn[strlen(sn) - 1] == '\t'))
  			sn[strlen(sn) - 1] = '\0';
  
--		linelen = snprintf(pre_buf, ONE_K / 4,
--			"\n%-8d%-12s%-18s%-16s%-16s%-10s",
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 		linelen = snprintf(pre_buf, ONE_K / 4,
+ 			"\n%-8d%-12s%-18s%-16s%-16s%-10s",
++#else
 +		seq_printf(m, "%-8d%-12s%-18s%-16s",
++#endif
  			i,
  			model,
  
-@@ -3481,14 +3417,12 @@
+@@ -3481,14 +3417,24 @@
  			changer_devs[i]->serial_num_len ? sn : "NA",
  
  			changer_devs[i]->ghost_device ? "" :
--			found ? changer_devs[i]->pname : "NA",
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 			found ? changer_devs[i]->pname : "NA",
++#else
 +			found ? changer_devs[i]->pname : "NA");
++#endif
  
--			changer_devs[i]->ghost_device ? ""       :
--			scsi_addr_str((struct tape_descriptor*)
--				changer_devs[i],
--				temp_buf,
--				True),
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 			changer_devs[i]->ghost_device ? ""       :
+ 			scsi_addr_str((struct tape_descriptor*)
+ 				changer_devs[i],
+ 				temp_buf,
+ 				True),
++#else
 +		if (!changer_devs[i]->ghost_device)
 +			scsi_addr_str((struct tape_descriptor*)changer_devs[i], m, True);
  
 +		seq_printf(m, "%-10s\n",
++#endif
  			changer_devs[i]->ghost_device                 ? ""   :
  			!found                                        ? "NA" :
  			changer_devs[i]->chg_id == IBM_3590
-@@ -3498,45 +3432,23 @@
+@@ -3498,45 +3432,59 @@
  			changer_devs[i]->isPrimary            ? "Primary"     :
  			"Alternate");
  
--		if(buf_offset > length) {
--			buf_offset = length;
--			break;
--		} else if(buf_offset + linelen >= length) {
--			memset(&buffer[buf_offset], ' ', length - buf_offset);
--			buf_offset = length;
--			break;
--		} /* if */
--
--		buf_offset += sprintf(&buffer[buf_offset], "%s", pre_buf);
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 		if(buf_offset > length) {
+ 			buf_offset = length;
+ 			break;
+ 		} else if(buf_offset + linelen >= length) {
+ 			memset(&buffer[buf_offset], ' ', length - buf_offset);
+ 			buf_offset = length;
+ 			break;
+ 		} /* if */
+ 
+ 		buf_offset += sprintf(&buffer[buf_offset], "%s", pre_buf);
++#endif
  		changer_devs[i]->proc_read = True;
  	} /* for */
  
  	changer_des_locked = False;
  	READ_UNLOCK(&changer_des_lock);
  
--	if(i == start_dev || i >= MaxLinTapeChangerDevices) {
--		if(buf_offset == length) buf_offset--;
--		buf_offset += sprintf(&buffer[buf_offset], "\n");
--		*eof = True;
--		if(i >= MaxLinTapeChangerDevices) *start = buffer;
--		goto EXIT_LABEL;
--	} /* if */
--
--	*start = buffer;
--
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 	if(i == start_dev || i >= MaxLinTapeChangerDevices) {
+ 		if(buf_offset == length) buf_offset--;
+ 		buf_offset += sprintf(&buffer[buf_offset], "\n");
+ 		*eof = True;
+ 		if(i >= MaxLinTapeChangerDevices) *start = buffer;
+ 		goto EXIT_LABEL;
+ 	} /* if */
+ 
+ 	*start = buffer;
++#endif
+ 
  EXIT_LABEL:
  
  	if(model) kfree(model);
--	if(pre_buf) kfree(pre_buf);
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 	if(pre_buf) kfree(pre_buf);
++#endif
  	if(sn) kfree(sn);
  
  	if(changer_des_locked) READ_UNLOCK(&changer_des_lock);
  	changer_des_locked = False;
  
--	if(buf_offset == 1 && *eof) buf_offset = 0;
--	DbgPrint(("changer_read_proc exit: %d\n", buf_offset));
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 	if(buf_offset == 1 && *eof) buf_offset = 0;
+ 	DbgPrint(("changer_read_proc exit: %d\n", buf_offset));
++#else
 +	DbgPrint(("changer_read_proc exit\n"));
++#endif
  
--	return buf_offset;
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 	return buf_offset;
++#else
 +	return 0;
++#endif
  } /* changer_read_proc() */
  
  /*******************************************************************************
-@@ -3557,15 +3469,12 @@
+@@ -3557,15 +3469,25 @@
  *                                                                              *
  *******************************************************************************/
  
--int rd_pc_initial(char* buffer, int* buf_offset, int length, char** start,
--	boolean chg)
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ int rd_pc_initial(char* buffer, int* buf_offset, int length, char** start,
+ 	boolean chg)
++#else
 +int rd_pc_initial(struct seq_file *m, boolean chg)
++#endif
  {
--	int rc = 1, count = 0, i = 0, max_devices = 0;
--	char tmp_buf[96];
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 	int rc = 1, count = 0, i = 0, max_devices = 0;
+ 	char tmp_buf[96];
++#else
 +	int i = 0, max_devices = 0;
++#endif
  
  	DbgPrint(("rd_pc_initial entry\n"));
  
--	memset(tmp_buf, '\0', 96);
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 	memset(tmp_buf, '\0', 96);
++#endif
  	max_devices = chg ? MaxLinTapeChangerDevices : MaxLinTapeDevices;
  
  	/* set proc_read flag for each logical device to false */
-@@ -3580,47 +3489,14 @@
+@@ -3580,47 +3489,59 @@
  	} /* if */
  	WRITE_UNLOCK(chg ? &changer_des_lock : &tape_des_lock);
  
--	count = sprintf(tmp_buf, "lin_tape version: %s", LIN_TAPE_VERSION);
--	if(count > length) goto EXIT_LABEL;
--
--	count = sprintf(buffer, "lin_tape version: %s", LIN_TAPE_VERSION);
--	*buf_offset = count;
--
--	count = sprintf(tmp_buf, "\nlin_tape major number: %d", lin_tape_major);
--	if(*buf_offset + count > length) goto EXIT_LABEL;
--
--	count = sprintf(buffer + *buf_offset,
--		"\nlin_tape major number: %d", lin_tape_major);
--	*buf_offset += count;
--
--	count = sprintf(tmp_buf, "\nAttached %s Devices:",
--		chg ? "Changer" : "Tape");
--	if(*buf_offset + count > length) goto EXIT_LABEL;
--
--	count = sprintf(buffer + *buf_offset, "\nAttached %s Devices:",
--		chg ? "Changer" : "Tape");
--	*buf_offset += count;
--
--	count = sprintf(tmp_buf, "\n%-8s%-12s%-18s%-16s%-16s%-10s",
--			"Number", "model", "SN", "HBA", "SCSI", "FO Path");
--	if(*buf_offset + count > length) goto EXIT_LABEL;
--
--	count = sprintf(buffer + *buf_offset, "\n%-8s%-12s%-18s%-16s%-16s%-10s",
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 	count = sprintf(tmp_buf, "lin_tape version: %s", LIN_TAPE_VERSION);
+ 	if(count > length) goto EXIT_LABEL;
+ 
+ 	count = sprintf(buffer, "lin_tape version: %s", LIN_TAPE_VERSION);
+ 	*buf_offset = count;
+ 
+ 	count = sprintf(tmp_buf, "\nlin_tape major number: %d", lin_tape_major);
+ 	if(*buf_offset + count > length) goto EXIT_LABEL;
+ 
+ 	count = sprintf(buffer + *buf_offset,
+ 		"\nlin_tape major number: %d", lin_tape_major);
+ 	*buf_offset += count;
+ 
+ 	count = sprintf(tmp_buf, "\nAttached %s Devices:",
+ 		chg ? "Changer" : "Tape");
+ 	if(*buf_offset + count > length) goto EXIT_LABEL;
+ 
+ 	count = sprintf(buffer + *buf_offset, "\nAttached %s Devices:",
+ 		chg ? "Changer" : "Tape");
+ 	*buf_offset += count;
+ 
+ 	count = sprintf(tmp_buf, "\n%-8s%-12s%-18s%-16s%-16s%-10s",
+ 			"Number", "model", "SN", "HBA", "SCSI", "FO Path");
+ 	if(*buf_offset + count > length) goto EXIT_LABEL;
+ 
+ 	count = sprintf(buffer + *buf_offset, "\n%-8s%-12s%-18s%-16s%-16s%-10s",
++#else
 +	seq_printf(m, "lin_tape version: %s\n", LIN_TAPE_VERSION);
 +	seq_printf(m, "lin_tape major number: %d\n", lin_tape_major);
 +	seq_printf(m, "Attached %s Devices:\n", chg ? "Changer" : "Tape");
 +	seq_printf(m, "%-8s%-12s%-18s%-16s%-16s%-10s\n",
++#endif
  		"Number", "model", "SN", "HBA", "SCSI", "FO Path");
--	*buf_offset += count;
--
--	rc = 0;
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 	*buf_offset += count;
  
--EXIT_LABEL:
--
--	if(rc) {
--		memset(buffer + *buf_offset, ' ', length - *buf_offset);
--		*buf_offset = length;
--		*start = buffer;
--	} /* if */
--
--	DbgPrint(("rd_pc_initial  exit: %d\n", rc));
--	return rc;
+ 	rc = 0;
+ 
+ EXIT_LABEL:
+ 
+ 	if(rc) {
+ 		memset(buffer + *buf_offset, ' ', length - *buf_offset);
+ 		*buf_offset = length;
+ 		*start = buffer;
+ 	} /* if */
+ 
+ 	DbgPrint(("rd_pc_initial  exit: %d\n", rc));
+ 	return rc;
++#else
 +	DbgPrint(("rd_pc_initial exit\n"));
 +	return 0;
++#endif
  } /* rd_pc_initial() */
  
  /*******************************************************************************
-@@ -3642,8 +3518,8 @@
+@@ -3642,8 +3518,13 @@
  *                                                                              *
  *******************************************************************************/
  
--int rd_pc_start_dev(int* start_dev, int* eof, off_t offset, char* buffer,
--	int* buf_offset, boolean chg)
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ int rd_pc_start_dev(int* start_dev, int* eof, off_t offset, char* buffer,
+ 	int* buf_offset, boolean chg)
++#else
 +int rd_pc_start_dev(int* start_dev, int* eof, off_t offset, struct seq_file *m,
 +	boolean chg)
++#endif
  {
  	int found = False, rc = 0, i = 0, max_devices = 0;
  
-@@ -3678,7 +3554,7 @@
+@@ -3678,7 +3554,11 @@
  
  	if(*start_dev >= max_devices) {
  		*eof = True;
--		*buf_offset += sprintf(&buffer[*buf_offset], "\n");
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 		*buf_offset += sprintf(&buffer[*buf_offset], "\n");
++#else
 +		seq_printf(m, "\n");
++#endif
  		rc = 1;
  		goto EXIT_LABEL;
  	} /* if */
-@@ -3705,17 +3581,16 @@
+@@ -3705,17 +3581,31 @@
  *                                                                              *
  *******************************************************************************/
  
--char* scsi_addr_str(struct tape_descriptor* drv, char* buffer, boolean cgr)
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ char* scsi_addr_str(struct tape_descriptor* drv, char* buffer, boolean cgr)
++#else
 +void scsi_addr_str(struct tape_descriptor* drv, struct seq_file *m, boolean cgr)
++#endif
  {
  	struct changer_descriptor* chg = (struct changer_descriptor*)drv;
  
  	if(cgr)
--		sprintf(buffer, "%d:%d:%d:%d",
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 		sprintf(buffer, "%d:%d:%d:%d",
++#else
 +		seq_printf(m, "%d:%d:%d:%d",
++#endif
  			chg->host, chg->channel, chg->target, chg->lun);
  	else
--		sprintf(buffer, "%d:%d:%d:%d",
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 		sprintf(buffer, "%d:%d:%d:%d",
++#else
 +		seq_printf(m, "%d:%d:%d:%d",
++#endif
  			drv->host, drv->channel, drv->target, drv->lun);
--	return buffer;
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ 	return buffer;
++#endif
  } /* scsi_addr_str() */
  
  /*******************************************************************************
 diff -ur lin_tape-2.1.0/lin_tape_scsi_config.h lin_tape-2.1.0-3.10/lin_tape_scsi_config.h
 --- lin_tape-2.1.0/lin_tape_scsi_config.h	2013-06-12 23:07:31.000000000 +0200
 +++ lin_tape-2.1.0-3.10/lin_tape_scsi_config.h	2013-08-25 14:22:14.635373745 +0200
-@@ -178,14 +178,11 @@
+@@ -178,14 +178,24 @@
  #endif
  static void lin_tape_rescan(struct device *);
  
--static int tape_read_proc(char *, char **, off_t, int, int *, void *);
--int rd_pc_initial(char* buffer, int* buf_offset, int length, char** start,
--	boolean chg);
--int rd_pc_start_dev(int* start_dev, int* eof, off_t offset, char* buffer,
--	int* buf_offset, boolean chg);
--char* scsi_addr_str(struct tape_descriptor* drv, char* buffer, boolean cgr);
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ static int tape_read_proc(char *, char **, off_t, int, int *, void *);
+ int rd_pc_initial(char* buffer, int* buf_offset, int length, char** start,
+ 	boolean chg);
+ int rd_pc_start_dev(int* start_dev, int* eof, off_t offset, char* buffer,
+ 	int* buf_offset, boolean chg);
+ char* scsi_addr_str(struct tape_descriptor* drv, char* buffer, boolean cgr);
++#else
 +static int tape_read_proc(struct seq_file *, void *);
 +int rd_pc_initial(struct seq_file *, boolean chg);
 +void scsi_addr_str(struct tape_descriptor* drv, struct seq_file *m, boolean cgr);
++#endif
  
--static int changer_read_proc(char *, char **, off_t, int, int *, void *);
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ static int changer_read_proc(char *, char **, off_t, int, int *, void *);
++#else
 +static int changer_read_proc(struct seq_file *, void *);
++#endif
  
  /* global variables */
  static unchar lin_tape_cleanup_module = 0;
-@@ -222,9 +219,6 @@
+@@ -222,8 +219,10 @@
  atomic_t tsm_tp_open = {0};
  static unsigned int lin_tape_major;
  
--static struct proc_dir_entry *tape_proc_entry = NULL;
--static struct proc_dir_entry *changer_proc_entry = NULL;
--
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+ static struct proc_dir_entry *tape_proc_entry = NULL;
+ static struct proc_dir_entry *changer_proc_entry = NULL;
++#endif
+ 
  #if LINUX_VERSION_CODE < KERNEL_VERSION(3,0,0)
  rwlock_t hba_lock = RW_LOCK_UNLOCKED;
- #else
