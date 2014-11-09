@@ -1,0 +1,83 @@
+--- lin_tape-2.9.1/lin_tape_scsi_config.c~	2014-11-09 16:31:44.000000000 +0100
++++ lin_tape-2.9.1/lin_tape_scsi_config.c	2014-11-09 16:33:25.734671175 +0100
+@@ -111,7 +111,7 @@
+ 
+ } /* lin_tape_debug_store() */
+ 
+-DRIVER_ATTR(lin_tape_debug, 0666, lin_tape_debug_show, lin_tape_debug_store);
++DRIVER_ATTR(lin_tape_debug, 0664, lin_tape_debug_show, lin_tape_debug_store);
+ 
+ /*******************************************************************************
+ *                                                                              *
+@@ -166,7 +166,7 @@
+ 
+ } /* auto_logging_store() */
+ 
+-DRIVER_ATTR(auto_logging, 0666, auto_logging_show, auto_logging_store);
++DRIVER_ATTR(auto_logging, 0664, auto_logging_show, auto_logging_store);
+ 
+ /*******************************************************************************
+ *                                                                              *
+@@ -220,7 +220,7 @@
+ 
+ } /* petro_store() */
+ 
+-DRIVER_ATTR(petro, 0666, petro_show, petro_store);
++DRIVER_ATTR(petro, 0664, petro_show, petro_store);
+ 
+ /*******************************************************************************
+ *                                                                              *
+@@ -275,7 +275,7 @@
+ 
+ } /* support_dio_store() */
+ 
+-DRIVER_ATTR(support_dio, 0666, support_dio_show, support_dio_store);
++DRIVER_ATTR(support_dio, 0664, support_dio_show, support_dio_store);
+ 
+ /*******************************************************************************
+ *                                                                              *
+@@ -356,7 +356,7 @@
+ 	return count;
+ } /* changer_open_reserve_show() */
+ 
+-DRIVER_ATTR(changer_open_reserve, 0666, changer_open_reserve_show,
++DRIVER_ATTR(changer_open_reserve, 0664, changer_open_reserve_show,
+ 	changer_open_reserve_store);
+ 
+ /*******************************************************************************
+@@ -527,7 +527,7 @@
+ 
+ } /* disable_density_on_open_store() */
+ 
+-DRIVER_ATTR(disable_density_on_open, 0666, disable_density_on_open_show,
++DRIVER_ATTR(disable_density_on_open, 0664, disable_density_on_open_show,
+ 	disable_density_on_open_store);
+ 
+ /*******************************************************************************
+@@ -583,7 +583,7 @@
+ 
+ } /* dynamic_attributes_store() */
+ 
+-DRIVER_ATTR(dynamic_attributes, 0666, dynamic_attributes_show,
++DRIVER_ATTR(dynamic_attributes, 0664, dynamic_attributes_show,
+ 	dynamic_attributes_store);
+ 
+ /*******************************************************************************
+@@ -699,7 +699,7 @@
+ #else
+ static DEVICE_ATTR(sys_encryption_proxy,
+ #endif
+-		0666,
++		0664,
+ 		lin_tape_class_device_encryption_proxy_show,
+ 		lin_tape_class_device_encryption_proxy_set);
+ 
+@@ -813,7 +813,7 @@
+ #else
+ static DEVICE_ATTR(sys_encryption_write,
+ #endif
+-			0666,
++			0664,
+ 			lin_tape_class_device_encryption_write_show,
+ 			lin_tape_class_device_encryption_write_set);
+ 

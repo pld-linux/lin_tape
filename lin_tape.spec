@@ -20,7 +20,7 @@ exit 1
 %define		kpkg	%(echo %{_build_kernels} | tr , '\\n' | while read n ; do echo %%undefine alt_kernel ; [ -z "$n" ] || echo %%define alt_kernel $n ; echo %%kernel_pkg ; done)
 %define		bkpkg	%(echo %{_build_kernels} | tr , '\\n' | while read n ; do echo %%undefine alt_kernel ; [ -z "$n" ] || echo %%define alt_kernel $n ; echo %%build_kernel_pkg ; done)
 
-%define		rel	0.1
+%define		rel	1
 %define		pname	lin_tape
 Summary:	IBM Tape SCSI Device Driver for Linux
 Name:		%{pname}%{_alt_kernel}
@@ -32,6 +32,7 @@ Source0:	%{pname}-%{version}.tgz
 # Source0-md5:	305d2922f942a73f0f0b30fa49b92dd5
 Patch0:		use-module-dir.patch
 Patch1:		linux-3.10.patch
+Patch2:		insecure-perms.patch
 # System Storage, Tape systems, Tape drivers and software, Tape device drivers (Linux)
 URL:		http://www.ibm.com/support/fixcentral/
 BuildRequires:	rpmbuild(macros) >= 1.678
@@ -82,6 +83,7 @@ compatible platforms.\
 %setup -q -n %{pname}-%{version}
 %patch0 -p1
 %patch1 -p1
+%patch2 -p1
 %ifarch %ix86 ia64
 proc="Intel"
 %endif
