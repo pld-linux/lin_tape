@@ -1,24 +1,9 @@
 #
 # Conditional build:
-%bcond_without	dist_kernel	# allow non-distribution kernel
 %bcond_with	verbose		# verbose build (V=1)
-
-%if "%{_alt_kernel}" != "%{nil}"
-%if 0%{?build_kernels:1}
-%{error:alt_kernel and build_kernels are mutually exclusive}
-exit 1
-%endif
-%global		_build_kernels		%{alt_kernel}
-%else
-%global		_build_kernels		%{?build_kernels:,%{?build_kernels}}
-%endif
 
 # nothing to be placed to debuginfo package
 %define		_enable_debug_packages	0
-
-%define		kbrs	%(echo %{_build_kernels} | tr , '\\n' | while read n ; do echo %%undefine alt_kernel ; [ -z "$n" ] || echo %%define alt_kernel $n ; echo "BuildRequires:kernel%%{_alt_kernel}-module-build >= 3:2.6.20.2" ; done)
-%define		kpkg	%(echo %{_build_kernels} | tr , '\\n' | while read n ; do echo %%undefine alt_kernel ; [ -z "$n" ] || echo %%define alt_kernel $n ; echo %%kernel_pkg ; done)
-%define		bkpkg	%(echo %{_build_kernels} | tr , '\\n' | while read n ; do echo %%undefine alt_kernel ; [ -z "$n" ] || echo %%define alt_kernel $n ; echo %%build_kernel_pkg ; done)
 
 %define		rel	1
 %define		pname	lin_tape
@@ -35,8 +20,8 @@ Patch1:		linux-3.10.patch
 Patch2:		insecure-perms.patch
 # System Storage, Tape systems, Tape drivers and software, Tape device drivers (Linux)
 URL:		http://www.ibm.com/support/fixcentral/
-BuildRequires:	rpmbuild(macros) >= 1.678
-%{?with_dist_kernel:%{expand:%kbrs}}
+BuildRequires:	rpmbuild(macros) >= 1.701
+%{expand:%buildrequires_kernel kernel%%{_alt_kernel}-module-build >= 3:2.6.20.2}
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
@@ -50,10 +35,8 @@ Summary:	IBM Tape SCSI Device Driver for Linux\
 Release:	%{rel}@%{_kernel_ver_str}\
 Group:		Base/Kernel\
 Requires(post,postun):	/sbin/depmod\
-%if %{with dist_kernel}\
 %requires_releq_kernel\
 Requires(postun):	%releq_kernel\
-%endif\
 \
 %description -n kernel%{_alt_kernel}-scsi-lin_tape\
 The IBM Tape Device Driver is a device driver that provides attachment\
@@ -77,7 +60,7 @@ compatible platforms.\
 %install_kernel_modules -D installed -m lin_tape -d kernel/drivers/scsi\
 %{nil}
 
-%{expand:%kpkg}
+%{expand:%create_kernel_packages}
 
 %prep
 %setup -q -n %{pname}-%{version}
@@ -104,7 +87,7 @@ proc="zSeries"
 %{__cp} -af Makefile.GPL Makefile
 
 %build
-%{expand:%bkpkg}
+%{expand:%build_kernel_packages}
 
 %install
 rm -rf $RPM_BUILD_ROOT
