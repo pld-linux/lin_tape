@@ -5,7 +5,7 @@
 # nothing to be placed to debuginfo package
 %define		_enable_debug_packages	0
 
-%define		rel	2
+%define		rel	3
 %define		pname	lin_tape
 Summary:	IBM Tape SCSI Device Driver for Linux
 Name:		%{pname}%{_alt_kernel}
@@ -67,10 +67,10 @@ compatible platforms.\
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
-%ifarch %ix86 ia64
+%ifarch %{ix86} ia64
 proc="Intel"
 %endif
-%ifarch %x8664
+%ifarch %{x8664} x32
 proc="AMD"
 %endif
 %ifarch ppc ppc64 powerpc powerpc64
