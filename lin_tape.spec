@@ -5,16 +5,17 @@
 # nothing to be placed to debuginfo package
 %define		_enable_debug_packages	0
 
-%define		rel	1
+%define		rel	0.1
 %define		pname	lin_tape
 Summary:	IBM Tape SCSI Device Driver for Linux
 Name:		%{pname}%{_alt_kernel}
-Version:	2.9.4
+Version:	3.0.8
 Release:	%{rel}%{?_pld_builder:@%{_kernel_ver_str}}
 License:	GPL v2/LGPL
 Group:		Base/Kernel
 Source0:	%{pname}-%{version}.tgz
-# Source0-md5:	343e4fbc132880bdecb4f66f061112e9
+# Source0-md5:	11a219f7b32496d9c334bbcd534da349
+Source1:	%{pname}.fixlist
 Patch0:		use-module-dir.patch
 Patch1:		linux-3.19.patch
 Patch2:		insecure-perms.patch
