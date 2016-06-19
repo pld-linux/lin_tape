@@ -23,6 +23,7 @@ Patch3:		linux-3.13.patch
 Patch4:		linux-3.19.patch
 Patch5:		linux-4.0.patch
 Patch6:		linux-4.6.patch
+Patch7:		no-uname.patch
 # System Storage, Tape systems, Tape drivers and software, Tape device drivers (Linux)
 URL:		http://www.ibm.com/support/fixcentral/
 BuildRequires:	rpmbuild(macros) >= 1.701
@@ -77,18 +78,7 @@ compatible platforms.\
 %patch4 -p1
 %patch5 -p1
 %patch6 -p1
-%ifarch %{ix86} ia64
-proc="Intel"
-%endif
-%ifarch %{x8664} x32
-proc="AMD"
-%endif
-%ifarch ppc ppc64 powerpc powerpc64
-proc="pSeries"
-%endif
-%ifarch s390 s390x
-proc="zSeries"
-%endif
+%patch7 -p1
 
 install -p %{SOURCE1} .
 

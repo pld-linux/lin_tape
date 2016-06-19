@@ -1,0 +1,28 @@
+--- lin_tape-3.0.8/Makefile.orig	2016-06-19 15:38:24.000000000 +0000
++++ lin_tape-3.0.8/Makefile	2016-06-19 15:39:28.228067758 +0000
+@@ -18,25 +18,6 @@
+ lin_tape-objs := join.o lin_tape_scsi_config.o lin_tape_scsi_tape.o lin_tape_scsi_trace.o \
+              lin_tape_ioctl_tape.o lin_tape_ioctl_changer.o lin_tape_extra_ioctl.o
+ 
+-PROC := $(shell uname -m)
+-
+-ifeq ($(PROC), ppc64)
+-EXTRA_CFLAGS += -m64
+-endif
+-
+-ifeq ($(PROC), powerpc64)
+-EXTRA_CFLAGS += -m64
+-endif
+-
+-ifeq ($(PROC), powerpc)
+-EXTRA_CFLAGS += -m64 -msoft-float
+-LDFLAGS += -melf64ppc
+-endif
+-
+-ifeq ($(PROC), x86_64)
+-EXTRA_CFLAGS += -mcmodel=kernel
+-endif
+-
+ VERSION := $(word 1,$(VERSIONRELEASE))
+ RELEASE := $(word 2,$(VERSIONRELEASE))
+ ifeq ($(RELEASE),)
