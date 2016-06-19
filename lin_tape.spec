@@ -5,7 +5,7 @@
 # nothing to be placed to debuginfo package
 %define		_enable_debug_packages	0
 
-%define		rel	0.1
+%define		rel	1
 %define		pname	lin_tape
 Summary:	IBM Tape SCSI Device Driver for Linux
 Name:		%{pname}%{_alt_kernel}
@@ -17,8 +17,12 @@ Source0:	%{pname}-%{version}.tgz
 # Source0-md5:	11a219f7b32496d9c334bbcd534da349
 Source1:	%{pname}.fixlist
 Patch0:		use-module-dir.patch
-Patch1:		linux-3.19.patch
+Patch1:		clean-ifdefs.patch
 Patch2:		insecure-perms.patch
+Patch3:		linux-3.13.patch
+Patch4:		linux-3.19.patch
+Patch5:		linux-4.0.patch
+Patch6:		linux-4.6.patch
 # System Storage, Tape systems, Tape drivers and software, Tape device drivers (Linux)
 URL:		http://www.ibm.com/support/fixcentral/
 BuildRequires:	rpmbuild(macros) >= 1.701
@@ -52,7 +56,7 @@ compatible platforms.\
 \
 %files -n kernel%{_alt_kernel}-scsi-lin_tape\
 %defattr(644,root,root,755)\
-%doc lin_tape.fixlist lin_tape_Ultrium.ReadMe lin_tape_359X.ReadMe\
+%doc lin_tape.fixlist lin_tape.ReadMe\
 /lib/modules/%{_kernel_ver}/kernel/drivers/scsi/lin_tape.ko*\
 %{nil}
 
@@ -65,9 +69,14 @@ compatible platforms.\
 
 %prep
 %setup -q -n %{pname}-%{version}
+%undos Makefile
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
+%patch3 -p1
+%patch4 -p1
+%patch5 -p1
+%patch6 -p1
 %ifarch %{ix86} ia64
 proc="Intel"
 %endif
@@ -81,11 +90,7 @@ proc="pSeries"
 proc="zSeries"
 %endif
 
-%{__cp} -af lin_tape_359X_${proc}.ReadMe lin_tape_359X.ReadMe
-%{__cp} -af lin_tape_Ultrium_${proc}.ReadMe lin_tape_Ultrium.ReadMe
-
-%{__mv} Makefile Makefile.IBM
-%{__cp} -af Makefile.GPL Makefile
+install -p %{SOURCE1} .
 
 %build
 %{expand:%build_kernel_packages}

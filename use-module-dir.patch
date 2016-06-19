@@ -8,26 +8,4 @@
 +VERSIONRELEASE := $(shell sed --regexp-extended -e '{/\#define LIN_TAPE_VERSION/ s/.*"([0-9.]*)-?([A-Za-z0-9.]*)"/\1 \2/p;d}' $(M)/lin_tape_tape.h)
  endif
  
- obj-m := lin_tape.o
---- lin_tape-1.74.0/Makefile.GPL~	2012-08-21 19:32:26.000000000 +0200
-+++ lin_tape-1.74.0/Makefile.GPL	2012-09-29 13:26:42.136710913 +0200
-@@ -5,7 +5,7 @@
- #include $(PWD)/Kbuild
- 
- else
--VERSIONRELEASE := $(shell sed --regexp-extended -e '{/\#define LIN_TAPE_VERSION/ s/.*"([0-9.]*)-?([A-Za-z0-9.]*)"/\1 \2/p;d}' lin_tape_tape.h)
-+VERSIONRELEASE := $(shell sed --regexp-extended -e '{/\#define LIN_TAPE_VERSION/ s/.*"([0-9.]*)-?([A-Za-z0-9.]*)"/\1 \2/p;d}' $(M)/lin_tape_tape.h)
- endif
- 
- obj-m := lin_tape.o
---- lin_tape-1.74.0/Makefile.supported~	2012-08-21 19:32:27.000000000 +0200
-+++ lin_tape-1.74.0/Makefile.supported	2012-09-29 13:26:59.573376965 +0200
-@@ -5,7 +5,7 @@
- #include $(PWD)/Kbuild
- 
- else
--VERSIONRELEASE := $(shell sed --regexp-extended -e '{/\#define LIN_TAPE_VERSION/ s/.*"([0-9.]*)-?([A-Za-z0-9.]*)"/\1 \2/p;d}' lin_tape_tape.h)
-+VERSIONRELEASE := $(shell sed --regexp-extended -e '{/\#define LIN_TAPE_VERSION/ s/.*"([0-9.]*)-?([A-Za-z0-9.]*)"/\1 \2/p;d}' $(M)/lin_tape_tape.h)
- endif
- 
- obj-m := lin_tape.o
+ obj-m := stmp.o

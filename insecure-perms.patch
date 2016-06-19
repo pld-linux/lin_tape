@@ -63,6 +63,33 @@
  	dynamic_attributes_store);
  
  /*******************************************************************************
+@@ -639,7 +639,7 @@
+ 
+ } /* lin_tape_as_sfmp_store() */
+ 
+-DRIVER_ATTR(lin_tape_as_sfmp, 0666, lin_tape_as_sfmp_show, lin_tape_as_sfmp_store);
++DRIVER_ATTR(lin_tape_as_sfmp, 0664, lin_tape_as_sfmp_show, lin_tape_as_sfmp_store);
+ /*******************************************************************************
+ *                                                                              *
+ *  NAME:  disable_auto_drive_dump_show                                         *
+@@ -693,7 +693,7 @@
+ 
+ } /* disable_auto_drive_dump_store() */
+ 
+-DRIVER_ATTR(disable_auto_drive_dump, 0666, disable_auto_drive_dump_show, disable_auto_drive_dump_store);
++DRIVER_ATTR(disable_auto_drive_dump, 0664, disable_auto_drive_dump_show, disable_auto_drive_dump_store);
+ 
+ /*******************************************************************************
+ *                                                                              *
+@@ -748,7 +748,7 @@
+ 
+ } /* busy_retry_store() */
+ 
+-DRIVER_ATTR(busy_retry, 0666, busy_retry_show, busy_retry_store);
++DRIVER_ATTR(busy_retry, 0664, busy_retry_show, busy_retry_store);
+ /*******************************************************************************
+ *                                                                              *
+ *                           CLASS DEVICE ATTRIBUTES                            *
 @@ -699,7 +699,7 @@
  #else
  static DEVICE_ATTR(sys_encryption_proxy,
