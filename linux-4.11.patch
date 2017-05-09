@@ -1,19 +1,32 @@
---- lin_tape-3.0.18/lin_tape_tape.h~	2017-05-09 21:24:21.100249196 +0200
-+++ lin_tape-3.0.18/lin_tape_tape.h	2017-05-09 21:22:43.130950272 +0200
-@@ -85,7 +85,11 @@
- #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,9)
- #define KOBJ_CT(kobj) ((kobj) ? atomic_read(&(kobj)->refcount) : 0)
- #else
-+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,11,0)
- #define KOBJ_CT(kobj) ((kobj) ? atomic_read(&(kobj)->kref.refcount) : 0)
-+#else
-+#define KOBJ_CT(kobj) ((kobj) ? kref_read(&(kobj)->kref) : 0)
+diff -ur lin_tape-3.0.18/intercept.c lin_tape-3.0.18-4.11/intercept.c
+--- lin_tape-3.0.18/intercept.c	2017-02-23 19:14:41.000000000 +0100
++++ lin_tape-3.0.18-4.11/intercept.c	2017-05-10 00:35:27.637366919 +0200
+@@ -37,6 +37,9 @@
+ #include <linux/init.h>
+ #include <linux/idr.h>
+ #include <scsi/scsi_driver.h>
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,11,0)
++#include <scsi/scsi_transport.h>
 +#endif
- #endif
  
- /* global definitions */
---- lin_tape-3.0.18/lin_tape_ioctl_tape.c~	2017-05-09 21:30:01.000000000 +0200
-+++ lin_tape-3.0.18/lin_tape_ioctl_tape.c	2017-05-09 21:36:05.393963455 +0200
+ #include "scsi.h"
+ #include "pfo.h"
+@@ -1362,7 +1365,12 @@
+ 	if (pdev->fdev_num != -1) {
+ 		/* Only for fo devices */
+ 		/* This 'if' must match the one above in create unique */
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,11,0)
++		sdev->request_queue = blk_alloc_queue_node(GFP_KERNEL, NUMA_NO_NODE);
++		__scsi_init_queue(sdev->host, sdev->request_queue);
++#else
+ 		sdev->request_queue = __scsi_alloc_queue(sdev->host, NULL);
++#endif
+ 	}
+ 
+ 	/* set device hierachy so the new dummy dev
+diff -ur lin_tape-3.0.18/lin_tape_ioctl_tape.c lin_tape-3.0.18-4.11/lin_tape_ioctl_tape.c
+--- lin_tape-3.0.18/lin_tape_ioctl_tape.c	2017-05-10 00:36:01.952285733 +0200
++++ lin_tape-3.0.18-4.11/lin_tape_ioctl_tape.c	2017-05-09 21:45:14.236233622 +0200
 @@ -6464,7 +6464,11 @@
  	} /* if */
  
@@ -26,7 +39,7 @@
  #if LINUX_VERSION_CODE < KERNEL_VERSION(4,10,0)
  	req->cmd_flags |= REQ_QUIET;
  #else
-@@ -6540,17 +6540,29 @@
+@@ -6536,17 +6540,29 @@
  		bio = req->bio;
  	} /* if */
  
@@ -56,8 +69,135 @@
  	status_code = req->errors;
  
  	if(buf_len && !use_sg) {
---- lin_tape-3.0.18/stmp.c~	2017-05-09 21:30:01.000000000 +0200
-+++ lin_tape-3.0.18/stmp.c	2017-05-09 21:35:48.826918381 +0200
+diff -ur lin_tape-3.0.18/lin_tape_ioctl_tape.c.orig lin_tape-3.0.18-4.11/lin_tape_ioctl_tape.c.orig
+--- lin_tape-3.0.18/lin_tape_ioctl_tape.c.orig	2017-02-23 19:14:41.000000000 +0100
++++ lin_tape-3.0.18-4.11/lin_tape_ioctl_tape.c.orig	2017-05-09 21:45:14.232900215 +0200
+@@ -6465,7 +6465,11 @@
+ 
+ 	tmp_rq = (void*)sdev->request_queue;
+ 	req->cmd_type = REQ_TYPE_BLOCK_PC;
++#if LINUX_VERSION_CODE < KERNEL_VERSION(4,10,0)
+ 	req->cmd_flags |= REQ_QUIET;
++#else
++	req->cmd_flags |= RQF_QUIET;
++#endif
+ 
+ 	if(buf_len) {
+ 		mdata = kmalloc(sizeof(struct rq_map_data), GFP_KERNEL);
+diff -ur lin_tape-3.0.18/lin_tape_tape.h lin_tape-3.0.18-4.11/lin_tape_tape.h
+--- lin_tape-3.0.18/lin_tape_tape.h	2017-02-23 19:14:41.000000000 +0100
++++ lin_tape-3.0.18-4.11/lin_tape_tape.h	2017-05-09 21:45:14.236233622 +0200
+@@ -85,7 +85,11 @@
+ #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,9)
+ #define KOBJ_CT(kobj) ((kobj) ? atomic_read(&(kobj)->refcount) : 0)
+ #else
++#if LINUX_VERSION_CODE < KERNEL_VERSION(4,11,0)
+ #define KOBJ_CT(kobj) ((kobj) ? atomic_read(&(kobj)->kref.refcount) : 0)
++#else
++#define KOBJ_CT(kobj) ((kobj) ? kref_read(&(kobj)->kref) : 0)
++#endif
+ #endif
+ 
+ /* global definitions */
+diff -ur lin_tape-3.0.18/lower.c lin_tape-3.0.18-4.11/lower.c
+--- lin_tape-3.0.18/lower.c	2017-02-23 19:14:41.000000000 +0100
++++ lin_tape-3.0.18-4.11/lower.c	2017-05-10 00:21:19.106042388 +0200
+@@ -69,7 +69,11 @@
+ /* Local function prototypes */
+ static int lower_scsi_execute(struct scsi_device *sdev,
+ 				struct apfo_scsi_command *pfo_cmd,
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,11,0)
++				unsigned char *local_raw_sense, struct scsi_sense_hdr *sshdr);
++#else
+ 				unsigned char *local_raw_sense);
++#endif
+ 
+ /** Look at the errors from the SCSI command,
+  * translate them to OS independent values.
+@@ -267,11 +271,20 @@
+ 		/* SCSI Command from decide code */
+ 		result = scsi_execute(sdev, pfo_cmd->scsi_cmd,
+ 			pfo_cmd->data_direction, pfo_cmd->buffer,
++#if LINUX_VERSION_CODE < KERNEL_VERSION(4,11,0)
+ 			pfo_cmd->bufflen, local_raw_sense, pfo_cmd->timeout,
+ 			pfo_cmd->retries, pfo_cmd->flags, &pfo_cmd->resid_len);
++#else
++			pfo_cmd->bufflen, local_raw_sense, &local_sense_data, pfo_cmd->timeout,
++			pfo_cmd->retries, pfo_cmd->flags, 0, &pfo_cmd->resid_len);
++#endif
+ 	} else {
+ 		/* SCSI Command from user space */
++#if LINUX_VERSION_CODE < KERNEL_VERSION(4,11,0)
+ 		result = lower_scsi_execute(sdev, pfo_cmd, local_raw_sense);
++#else
++		result = lower_scsi_execute(sdev, pfo_cmd, local_raw_sense, &local_sense_data);
++#endif
+ 	}
+ 	/* Release this path */
+ 	scsi_device_put(sdev);
+@@ -440,7 +453,11 @@
+  */
+ static int lower_scsi_execute(struct scsi_device *sdev,
+ 				struct apfo_scsi_command *pfo_cmd,
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,11,0)
++				unsigned char *local_raw_sense, struct scsi_sense_hdr *sshdr) {
++#else
+ 				unsigned char *local_raw_sense) {
++#endif
+ 
+ 	int err = 0;
+ 	struct request *rq;
+@@ -452,7 +469,11 @@
+ 		return DRIVER_ERROR << 24;
+ 	}
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,11,0)
++	scsi_req_init(rq);
++#else
+ 	rq->cmd_type = REQ_TYPE_BLOCK_PC;
++#endif
+ 	rq->cmd_flags |= pfo_cmd->flags;
+ 
+ 	if ((pfo_cmd->bufflen > 0) && (pfo_cmd->data_direction != DMA_NONE)) {
+@@ -533,11 +554,19 @@
+ 		}
+ 	}
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,11,0)
++	scsi_req(rq)->cmd_len = pfo_cmd->cmd_len;
++	memset(scsi_req(rq)->cmd, 0, BLK_MAX_CDB);
++	memcpy(scsi_req(rq)->cmd, pfo_cmd->scsi_cmd, pfo_cmd->cmd_len);
++	scsi_req(rq)->sense = local_raw_sense;
++	scsi_req(rq)->sense_len = 0;
++#else
+ 	rq->cmd_len = pfo_cmd->cmd_len;
+ 	memset(rq->cmd, 0, BLK_MAX_CDB);
+ 	memcpy(rq->cmd, pfo_cmd->scsi_cmd, pfo_cmd->cmd_len);
+ 	rq->sense = local_raw_sense;
+ 	rq->sense_len = 0;
++#endif
+ 	rq->timeout = pfo_cmd->timeout;
+ 	rq->retries = pfo_cmd->retries;
+ 	rq->end_io_data = pfo_cmd;
+@@ -551,8 +580,15 @@
+ 			DBG_ERROR("unmap returns: %d\n", err);
+ 		}
+ 	}
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,11,0)
++	pfo_cmd->resid_len = scsi_req(rq)->resid_len;
++	pfo_cmd->sense_len = scsi_req(rq)->sense_len;
++	if (sshdr)
++		scsi_normalize_sense(scsi_req(rq)->sense, scsi_req(rq)->sense_len, sshdr);
++#else
+ 	pfo_cmd->resid_len = rq->resid_len;
+ 	pfo_cmd->sense_len = rq->sense_len;
++#endif
+ 	pfo_cmd->errors = rq->errors;
+ 
+ 	blk_put_request(rq);
+diff -ur lin_tape-3.0.18/stmp.c lin_tape-3.0.18-4.11/stmp.c
+--- lin_tape-3.0.18/stmp.c	2017-05-10 00:36:01.955619894 +0200
++++ lin_tape-3.0.18-4.11/stmp.c	2017-05-09 21:45:14.236233622 +0200
 @@ -611,7 +611,11 @@
  	if (!req)
  		return DRIVER_ERROR << 24;
