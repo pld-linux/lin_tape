@@ -1,9 +1,31 @@
 Fixlist for Linux IBM Tape Device Driver (lin_tape)
 
-(C) Copyright IBM Corporation 2007-2016
+(C) Copyright IBM Corporation 2007-2017
 
  Level      Date                   Description
 ---------------------------------------------------------------
+3.0.18 03/08/2017   - Prevent crash from double delete objects on removal during wait scenarios (introduced at 2.2.0)
+                    - lin_tape_as_sfmp not supported in this version
+                    - Installation for blacklist.conf enhancements
+3.0.16 01/06/2017   - Prevent crash introduced at 1.75.0 cleaning buffern and length on WRA during open
+                    - Prevent lock/crash introduced at 1.75.0 when device removal during open
+                    - Added dualaccesor_cpf for TSLM usage
+                    - Enhancement to installer to prevent blacklisting st and sg linux modules
+3.0.13 11/11/2016   - Fix for passthru error recovery after EOD detected
+                    - Fixes for device removal during wait causing lock or crash
+                    - Fix to prevent lock over lock at scatter/gather when running with low memory
+                    - Updates on daemon configuration parameters naming to match lin_taped.conf with IUG instructions
+                    - Added daemon parameter TapeDevPermissions to lin_taped.conf
+3.0.12 08/19/2016   - Fix for lin_tape_as_sfmp attachment on kenrnels 3.10.0 and beyond
+                    - Enhancement on lin_tape_as_sfmp installation
+3.0.11 08/08/2016   - Added join driver back
+                    - Fixed multiple kernel dependencies for join
+                    - Enhancement on join install
+                    - Fix on join driver for scsi rescan
+3.0.10 06/03/2016   - Removed join driver
+                    - New OEM library support
+                    - Initial support for RHEL 6.8 (min. kernel version 2.6.32-642)
+                    - Initial support for RHEL 7.2 (min. kernel version 3.10.0-327)
 3.0.8  03/16/2016   - Prevent segfault at daemon
                     - Fix for pfo device discovery at 390x arch.
 3.0.7  02/23/2016   - Prevent crash from st/sg failover
