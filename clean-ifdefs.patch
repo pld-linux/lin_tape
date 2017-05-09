@@ -1,26 +1,26 @@
-diff -ur lin_tape-3.0.8/Makefile lin_tape-3.0.8-norh/Makefile
---- lin_tape-3.0.8/Makefile	2016-06-19 09:57:15.497134019 +0200
-+++ lin_tape-3.0.8-norh/Makefile	2016-06-19 09:53:34.317661494 +0200
-@@ -18,15 +18,6 @@
+diff -ur lin_tape-3.0.18/Makefile lin_tape-3.0.18-ifdefs/Makefile
+--- lin_tape-3.0.18/Makefile	2017-05-09 21:11:32.977092391 +0200
++++ lin_tape-3.0.18-ifdefs/Makefile	2017-05-09 21:05:59.610307494 +0200
+@@ -20,15 +20,6 @@
  lin_tape-objs := join.o lin_tape_scsi_config.o lin_tape_scsi_tape.o lin_tape_scsi_trace.o \
               lin_tape_ioctl_tape.o lin_tape_ioctl_changer.o lin_tape_extra_ioctl.o
  
 -RHELRELEASE := $(shell [ -f "/etc/redhat-release" ] && echo 1 || echo 0)
 -ifeq ($(RHELRELEASE), 1)
 -KERNELDIR ?= /lib/modules/$(shell uname -r)/build
--KERNELVER = $(shell cd ${KERNELDIR}; make kernelversion 2>/dev/null|sed "s/[\.-]/_/g"|sed "s/\([0-9]*_[0-9]*_[0-9]*_[0-9]*\).*/\1/")
+-KERNELVER = $(shell uname -r 2>/dev/null|sed "s/[\.-]/_/g"|sed "s/\([0-9]*_[0-9]*_[0-9]*_[0-9]*\).*/\1/")
 -EXTRA_CFLAGS += -DKERNELVERSION_${KERNELVER}
 -else
 -EXTRA_CFLAGS += -DSLESVERSION
 -endif
--             
- PROC := $(shell uname -m)
- 
- ifeq ($(PROC), ppc64)
-diff -ur lin_tape-3.0.8/pfo.h lin_tape-3.0.8-norh/pfo.h
---- lin_tape-3.0.8/pfo.h	2016-03-17 03:37:58.000000000 +0100
-+++ lin_tape-3.0.8-norh/pfo.h	2016-06-19 09:53:34.000000000 +0200
-@@ -26,82 +26,6 @@
+-
+ ifeq ($(SFMP), 1)
+ EXTRA_CFLAGS += -DSFMPENABLED
+ endif
+diff -ur lin_tape-3.0.18/pfo.h lin_tape-3.0.18-ifdefs/pfo.h
+--- lin_tape-3.0.18/pfo.h	2017-02-23 19:14:41.000000000 +0100
++++ lin_tape-3.0.18-ifdefs/pfo.h	2017-05-09 21:06:34.117699008 +0200
+@@ -26,97 +26,6 @@
   * will build for various releases of Linux.  This is how
   * we track different versions using ifdef in the source.
   */
@@ -32,6 +32,7 @@ diff -ur lin_tape-3.0.8/pfo.h lin_tape-3.0.8-norh/pfo.h
 -#define BEFORE_RH_67 1
 -#define BEFORE_RH_70 1
 -#define BEFORE_RH_71 1
+-#define BEFORE_RH_72 1
 -#endif
 -#ifdef KERNELVERSION_2_6_32_279
 -#define AFTER_RH_62 1
@@ -41,6 +42,7 @@ diff -ur lin_tape-3.0.8/pfo.h lin_tape-3.0.8-norh/pfo.h
 -#define BEFORE_RH_67 1
 -#define BEFORE_RH_70 1
 -#define BEFORE_RH_71 1
+-#define BEFORE_RH_72 1
 -#endif
 -#ifdef KERNELVERSION_2_6_32_358
 -#define AFTER_RH_62 1
@@ -49,7 +51,7 @@ diff -ur lin_tape-3.0.8/pfo.h lin_tape-3.0.8-norh/pfo.h
 -#define BEFORE_RH_66 1
 -#define BEFORE_RH_67 1
 -#define BEFORE_RH_70 1
--#define BEFORE_RH_71 1
+-#define BEFORE_RH_72 1
 -#endif
 -#ifdef KERNELVERSION_2_6_32_431
 -#define AFTER_RH_62 1
@@ -59,6 +61,7 @@ diff -ur lin_tape-3.0.8/pfo.h lin_tape-3.0.8-norh/pfo.h
 -#define BEFORE_RH_67 1
 -#define BEFORE_RH_70 1
 -#define BEFORE_RH_71 1
+-#define BEFORE_RH_72 1
 -#endif
 -#ifdef KERNELVERSION_2_6_32_504
 -#define AFTER_RH_62 1
@@ -68,6 +71,7 @@ diff -ur lin_tape-3.0.8/pfo.h lin_tape-3.0.8-norh/pfo.h
 -#define BEFORE_RH_67 1
 -#define BEFORE_RH_70 1
 -#define BEFORE_RH_71 1
+-#define BEFORE_RH_72 1
 -#endif
 -#ifdef KERNELVERSION_2_6_32_573
 -#define AFTER_RH_62 1
@@ -77,6 +81,17 @@ diff -ur lin_tape-3.0.8/pfo.h lin_tape-3.0.8-norh/pfo.h
 -#define AFTER_RH_66 1
 -#define BEFORE_RH_70 1
 -#define BEFORE_RH_71 1
+-#define BEFORE_RH_72 1
+-#endif
+-#ifdef KERNELVERSION_2_6_32_642
+-#define AFTER_RH_62 1
+-#define AFTER_RH_63 1
+-#define AFTER_RH_64 1
+-#define AFTER_RH_65 1
+-#define AFTER_RH_66 1
+-#define BEFORE_RH_70 1
+-#define BEFORE_RH_71 1
+-#define BEFORE_RH_72 1
 -#endif
 -#ifdef KERNELVERSION_3_10_0_123
 -#define AFTER_RH_62 1
@@ -103,18 +118,18 @@ diff -ur lin_tape-3.0.8/pfo.h lin_tape-3.0.8-norh/pfo.h
  #define AFTER_RH_62 1
  #define AFTER_RH_63 1
  #define AFTER_RH_64 1
-@@ -111,7 +35,6 @@
+@@ -126,7 +35,6 @@
  #define AFTER_RH_6x 1
  #define AFTER_RH_70 1
- #define AFTER_RH_72 1
+ #define AFTER_RH_71 1
 -#endif
  
  /* Misc defines needed so source is same for all versions of Linux */
  #ifndef SDEV_TRANSPORT_OFFLINE
-diff -ur lin_tape-3.0.8/sgmp.c lin_tape-3.0.8-norh/sgmp.c
---- lin_tape-3.0.8/sgmp.c	2016-03-17 04:44:07.000000000 +0100
-+++ lin_tape-3.0.8-norh/sgmp.c	2016-06-19 09:55:40.075920922 +0200
-@@ -262,31 +262,11 @@
+diff -ur lin_tape-3.0.18/sgmp.c lin_tape-3.0.18-ifdefs/sgmp.c
+--- lin_tape-3.0.18/sgmp.c	2017-02-23 19:14:41.000000000 +0100
++++ lin_tape-3.0.18-ifdefs/sgmp.c	2017-05-09 21:10:20.295643954 +0200
+@@ -262,27 +262,12 @@
  {
  	struct sg_fd *sfp = (struct sg_fd *)filp->private_data;
  
@@ -127,77 +142,96 @@ diff -ur lin_tape-3.0.8/sgmp.c lin_tape-3.0.8-norh/sgmp.c
 -	struct request_queue *q = sfp->parentdp->device->request_queue;
 -#endif
 -#endif
--
+ 
  	if (sfp->parentdp->device->type == TYPE_SCANNER)
  		return 0;
  
--#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,0) && (!defined(SLESVERSION))
--	/* RHEL 7.0 and beyond */
--	return blk_verify_command(q, cmd, filp->f_mode & FMODE_WRITE);
--#else
--#ifdef AFTER_RH_63
--	/* RHEL 6.4+ */
--	return blk_verify_command(q, cmd, filp->f_mode & FMODE_WRITE);
--#else
--	/* RHEL6.3- or SLES11SP3 */
+-#if LINUX_VERSION_CODE > KERNEL_VERSION(3,12,0) || defined(SLESVERSION)
  	return blk_verify_command(cmd, filp->f_mode & FMODE_WRITE);
+-#else
+-	/* RHEL 6.4 and beyond */
+-	return blk_verify_command(q, cmd, filp->f_mode & FMODE_WRITE);
 -#endif
--#endif
+-//6.3 blk_verify_command(cmd, filp->f_mode & FMODE_WRITE);
+-
  }
  
  #if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,32)
-diff -ur lin_tape-3.0.8/upper.c lin_tape-3.0.8-norh/upper.c
---- lin_tape-3.0.8/upper.c	2016-02-23 20:19:55.000000000 +0100
-+++ lin_tape-3.0.8-norh/upper.c	2016-06-19 09:56:18.759745753 +0200
-@@ -266,20 +266,7 @@
- {
- 	if (copy_from_user(pfo_cmd->scsi_cmd, hdr->cmdp, hdr->cmd_len))
- 		return -EFAULT;
--#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,0) && (!defined(SLESVERSION))
--	/* RHEL 7.0 and beyond */
--	if (blk_verify_command(q, pfo_cmd->scsi_cmd, mode & FMODE_WRITE))
--#else
--#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,32)
--#ifdef AFTER_RH_63
--	/* RHEL 6.4+ */
--	if (blk_verify_command(q, pfo_cmd->scsi_cmd, mode & FMODE_WRITE))
--#else
--	/* RHEL 6.3- or SLES11SP3 */
- 	if (blk_verify_command(pfo_cmd->scsi_cmd, mode & FMODE_WRITE))
--#endif
--#endif
--#endif
- 		return -EPERM;
- 
- 	/*
---- lin_tape-3.0.8/sgmp.c~	2016-06-19 13:18:16.000000000 +0200
-+++ lin_tape-3.0.8/sgmp.c	2016-06-19 13:21:28.375961483 +0200
-@@ -1544,7 +1544,7 @@
+@@ -419,7 +404,7 @@
+ #endif
+ 		sdp->sgdebug = 0;
+ 		q = sdp->device->request_queue;
+-#if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,32) && (defined(SLESVERSION))
++#if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,32)
+ 		sdp->sg_tablesize = min(queue_max_hw_segments(q),
+                                 queue_max_phys_segments(q));
+ #else
+@@ -1546,7 +1531,7 @@
  		if ((sdp->sgdebug > 0) &&
  		    ((CHECK_CONDITION == srp->header.masked_status) ||
  		     (COMMAND_TERMINATED == srp->header.masked_status)))
--#ifdef AFTER_RH_72
+-#ifdef AFTER_RH_71
 +#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,19,0)
  			__scsi_print_sense(sdp->device, "sg_cmd_done", sense, SCSI_SENSE_BUFFERSIZE);
  
  #else
---- lin_tape-3.0.8/stmp.c~	2016-06-19 13:18:16.000000000 +0200
-+++ lin_tape-3.0.8/stmp.c	2016-06-19 13:21:10.882407139 +0200
-@@ -467,7 +467,7 @@
+@@ -1677,7 +1662,7 @@
+ 	INIT_LIST_HEAD(&sdp->sfds);
+ 	init_waitqueue_head(&sdp->o_excl_wait);
+ 
+-#if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,32) && (defined(SLESVERSION))
++#if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,32)
+ 	sdp->sg_tablesize = min(queue_max_hw_segments(q),
+                             queue_max_phys_segments(q));
+ #else
+@@ -3069,7 +3054,7 @@
+ 			      scsidp->id, scsidp->lun, (int) scsidp->type,
+ 			      1,
+ 			      (int) scsidp->queue_depth,
+-#ifdef AFTER_RH_71
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,19,0)
+ 				  (int) atomic_read(&scsidp->device_busy),
+ #else
+ 				  (int) scsidp->device_busy,
+diff -ur lin_tape-3.0.18/stmp.c lin_tape-3.0.18-ifdefs/stmp.c
+--- lin_tape-3.0.18/stmp.c	2017-02-23 19:14:41.000000000 +0100
++++ lin_tape-3.0.18-ifdefs/stmp.c	2017-05-09 21:11:01.113125428 +0200
+@@ -454,7 +454,7 @@
  		       SRpnt->cmd[0], SRpnt->cmd[1], SRpnt->cmd[2],
  		       SRpnt->cmd[3], SRpnt->cmd[4], SRpnt->cmd[5]);
  		if (cmdstatp->have_sense)
--#ifdef AFTER_RH_72
+-#ifdef AFTER_RH_70
 +#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,19,0)
  			__scsi_print_sense(STp->device, name, SRpnt->sense, SCSI_SENSE_BUFFERSIZE);
  
  #else
-@@ -488,7 +488,7 @@
+@@ -475,7 +475,7 @@
  			 scode != VOLUME_OVERFLOW &&
  			 SRpnt->cmd[0] != MODE_SENSE &&
  			 SRpnt->cmd[0] != TEST_UNIT_READY) {
--#ifdef AFTER_RH_72
+-#ifdef AFTER_RH_71
 +#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,19,0)
  			__scsi_print_sense(STp->device, name, SRpnt->sense, SCSI_SENSE_BUFFERSIZE);
  
  #else
+diff -ur lin_tape-3.0.18/upper.c lin_tape-3.0.18-ifdefs/upper.c
+--- lin_tape-3.0.18/upper.c	2017-02-23 19:14:41.000000000 +0100
++++ lin_tape-3.0.18-ifdefs/upper.c	2017-05-09 21:09:37.868126006 +0200
+@@ -267,7 +267,7 @@
+ 	if (copy_from_user(pfo_cmd->scsi_cmd, hdr->cmdp, hdr->cmd_len))
+ 		return -EFAULT;
+ 
+-#if LINUX_VERSION_CODE > KERNEL_VERSION(3,12,0) || defined(SLESVERSION)
++#if LINUX_VERSION_CODE > KERNEL_VERSION(3,12,0)
+ 	if (blk_verify_command(pfo_cmd->scsi_cmd, mode & FMODE_WRITE))
+ #else
+ 	/* RHEL 6.4 and beyond */
+@@ -608,7 +608,7 @@
+ 	if (in_len && copy_from_user(buffer, sic->data + cmdlen, in_len))
+ 		goto error;
+ 
+-#if LINUX_VERSION_CODE > KERNEL_VERSION(3,12,0) || defined(SLESVERSION)
++#if LINUX_VERSION_CODE > KERNEL_VERSION(3,12,0)
+ 	err = blk_verify_command(scsi_cmd, mode & FMODE_WRITE);
+ #else
+ 	/* RHEL 6.4 and beyond */

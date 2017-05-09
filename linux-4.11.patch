@@ -1,0 +1,72 @@
+--- lin_tape-3.0.18/lin_tape_tape.h~	2017-05-09 21:24:21.100249196 +0200
++++ lin_tape-3.0.18/lin_tape_tape.h	2017-05-09 21:22:43.130950272 +0200
+@@ -85,7 +85,11 @@
+ #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,9)
+ #define KOBJ_CT(kobj) ((kobj) ? atomic_read(&(kobj)->refcount) : 0)
+ #else
++#if LINUX_VERSION_CODE < KERNEL_VERSION(4,11,0)
+ #define KOBJ_CT(kobj) ((kobj) ? atomic_read(&(kobj)->kref.refcount) : 0)
++#else
++#define KOBJ_CT(kobj) ((kobj) ? kref_read(&(kobj)->kref) : 0)
++#endif
+ #endif
+ 
+ /* global definitions */
+--- lin_tape-3.0.18/lin_tape_ioctl_tape.c~	2017-05-09 21:30:01.000000000 +0200
++++ lin_tape-3.0.18/lin_tape_ioctl_tape.c	2017-05-09 21:36:05.393963455 +0200
+@@ -6464,7 +6464,11 @@
+ 	} /* if */
+ 
+ 	tmp_rq = (void*)sdev->request_queue;
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,11,0)
++	scsi_req_init(req);
++#else
+ 	req->cmd_type = REQ_TYPE_BLOCK_PC;
++#endif
+ #if LINUX_VERSION_CODE < KERNEL_VERSION(4,10,0)
+ 	req->cmd_flags |= REQ_QUIET;
+ #else
+@@ -6540,17 +6540,29 @@
+ 		bio = req->bio;
+ 	} /* if */
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,11,0)
++	scsi_req(req)->cmd_len = COMMAND_SIZE(cdb[0]);
++	memset(scsi_req(req)->cmd, '\0', MAX_CDB_SIZE);
++	memcpy(scsi_req(req)->cmd, cdb, scsi_req(req)->cmd_len);
++	scsi_req(req)->sense = sense_data;
++	scsi_req(req)->sense_len = 0;
++#else
+ 	req->cmd_len = COMMAND_SIZE(cdb[0]);
+ 	memset(req->cmd, '\0', MAX_CDB_SIZE);
+ 	memcpy(req->cmd, cdb, req->cmd_len);
+ 	req->sense = sense_data;
+ 	req->sense_len = 0;
++#endif
+ 	req->timeout = timeout;
+ 	req->retries = 0;
+ 
+ 	blk_execute_rq(req->q, NULL, req, 1);
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,11,0)
++	*resid = scsi_req(req)->resid_len;
++#else
+ 	*resid = req->resid_len;
++#endif
+ 	status_code = req->errors;
+ 
+ 	if(buf_len && !use_sg) {
+--- lin_tape-3.0.18/stmp.c~	2017-05-09 21:30:01.000000000 +0200
++++ lin_tape-3.0.18/stmp.c	2017-05-09 21:35:48.826918381 +0200
+@@ -611,7 +611,11 @@
+ 	if (!req)
+ 		return DRIVER_ERROR << 24;
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,11,0)
++	scsi_req_init(req);
++#else
+ 	req->cmd_type = REQ_TYPE_BLOCK_PC;
++#endif
+ #if LINUX_VERSION_CODE < KERNEL_VERSION(4,10,0)
+ 	req->cmd_flags |= REQ_QUIET;
+ #else
