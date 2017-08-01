@@ -17,9 +17,9 @@ diff -ur lin_tape-3.0.8/stmp.c lin_tape-3.0.8-4.10/stmp.c
 --- lin_tape-3.0.8/stmp.c	2017-03-25 21:11:10.039325377 +0100
 +++ lin_tape-3.0.8-4.10/stmp.c	2017-03-25 21:10:48.338642620 +0100
 @@ -624,7 +624,11 @@
- 		return DRIVER_ERROR << 24;
- 
+ #else
  	req->cmd_type = REQ_TYPE_BLOCK_PC;
+ #endif
 +#if LINUX_VERSION_CODE < KERNEL_VERSION(4,10,0)
  	req->cmd_flags |= REQ_QUIET;
 +#else

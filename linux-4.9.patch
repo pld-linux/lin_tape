@@ -15,18 +15,18 @@
 --- lin_tape-3.0.18/stmp.c~	2017-05-09 21:25:12.000000000 +0200
 +++ lin_tape-3.0.18/stmp.c	2017-05-09 21:29:19.121101188 +0200
 @@ -5205,7 +5205,14 @@
-         /* Try to fault in all of the necessary pages */
- 	down_read(&current->mm->mmap_sem);
-         /* rw==READ means read from drive, write into memory area */
--#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,6,0)
+ 	if ((pages = kmalloc(max_pages * sizeof(*pages), GFP_KERNEL)) == NULL)
+ 		return -ENOMEM;
+ 
+-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,4,21)
 +#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,9,0)
-+	res = get_user_pages(
++	res = get_user_pages_unlocked(
 +		uaddr,
 +		nr_pages,
 +		rw == READ ? FOLL_WRITE : 0,
 +		pages,
 +		NULL);
-+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4,6,0)
- 	res = get_user_pages(
- 		uaddr,
- 		nr_pages,
++#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4,4,21)
+     /* Try to fault in all of the necessary pages */
+     /* rw==READ means read from drive, write into memory area */
+ 	res = get_user_pages_unlocked(

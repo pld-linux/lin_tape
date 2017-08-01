@@ -20,7 +20,7 @@ diff -ur lin_tape-3.0.18/Makefile lin_tape-3.0.18-ifdefs/Makefile
 diff -ur lin_tape-3.0.18/pfo.h lin_tape-3.0.18-ifdefs/pfo.h
 --- lin_tape-3.0.18/pfo.h	2017-02-23 19:14:41.000000000 +0100
 +++ lin_tape-3.0.18-ifdefs/pfo.h	2017-05-09 21:06:34.117699008 +0200
-@@ -26,97 +26,6 @@
+@@ -26,109 +26,6 @@
   * will build for various releases of Linux.  This is how
   * we track different versions using ifdef in the source.
   */
@@ -89,6 +89,7 @@ diff -ur lin_tape-3.0.18/pfo.h lin_tape-3.0.18-ifdefs/pfo.h
 -#define AFTER_RH_64 1
 -#define AFTER_RH_65 1
 -#define AFTER_RH_66 1
+-#define AFTER_RH_67 1
 -#define BEFORE_RH_70 1
 -#define BEFORE_RH_71 1
 -#define BEFORE_RH_72 1
@@ -115,13 +116,24 @@ diff -ur lin_tape-3.0.18/pfo.h lin_tape-3.0.18-ifdefs/pfo.h
 -#define BEFORE_RH_72 1
 -#endif
 -#ifdef KERNELVERSION_3_10_0_327
+-#define AFTER_RH_62 1
+-#define AFTER_RH_63 1
+-#define AFTER_RH_64 1
+-#define AFTER_RH_65 1
+-#define AFTER_RH_66 1
+-#define AFTER_RH_67 1
+-#define AFTER_RH_6x 1
+-#define AFTER_RH_70 1
+-#define AFTER_RH_71 1
+-#endif
+-#ifdef KERNELVERSION_3_10_0_514
  #define AFTER_RH_62 1
  #define AFTER_RH_63 1
  #define AFTER_RH_64 1
 @@ -126,7 +35,6 @@
- #define AFTER_RH_6x 1
  #define AFTER_RH_70 1
  #define AFTER_RH_71 1
+ #define AFTER_RH_72 1
 -#endif
  
  /* Misc defines needed so source is same for all versions of Linux */
@@ -170,8 +182,8 @@ diff -ur lin_tape-3.0.18/sgmp.c lin_tape-3.0.18-ifdefs/sgmp.c
  		if ((sdp->sgdebug > 0) &&
  		    ((CHECK_CONDITION == srp->header.masked_status) ||
  		     (COMMAND_TERMINATED == srp->header.masked_status)))
--#ifdef AFTER_RH_71
-+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,19,0)
+-#if defined(AFTER_RH_71) || LINUX_VERSION_CODE >= KERNEL_VERSION(4,4,21)
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,4,21)
  			__scsi_print_sense(sdp->device, "sg_cmd_done", sense, SCSI_SENSE_BUFFERSIZE);
  
  #else
@@ -200,17 +212,17 @@ diff -ur lin_tape-3.0.18/stmp.c lin_tape-3.0.18-ifdefs/stmp.c
  		       SRpnt->cmd[0], SRpnt->cmd[1], SRpnt->cmd[2],
  		       SRpnt->cmd[3], SRpnt->cmd[4], SRpnt->cmd[5]);
  		if (cmdstatp->have_sense)
--#ifdef AFTER_RH_70
-+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,19,0)
+-#if defined(AFTER_RH_70) || LINUX_VERSION_CODE >= KERNEL_VERSION(4,4,21)
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,4,21)
  			__scsi_print_sense(STp->device, name, SRpnt->sense, SCSI_SENSE_BUFFERSIZE);
  
  #else
 @@ -475,7 +475,7 @@
- 			 scode != VOLUME_OVERFLOW &&
  			 SRpnt->cmd[0] != MODE_SENSE &&
  			 SRpnt->cmd[0] != TEST_UNIT_READY) {
--#ifdef AFTER_RH_71
-+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,19,0)
+ 
+-#if defined(AFTER_RH_71) || LINUX_VERSION_CODE >= KERNEL_VERSION(4,4,21)
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,4,21)
  			__scsi_print_sense(STp->device, name, SRpnt->sense, SCSI_SENSE_BUFFERSIZE);
  
  #else

@@ -1,0 +1,52 @@
+--- lin_tape-3.0.20/lin_tape_ioctl_tape.c.orig	2017-08-01 15:02:29.400676838 +0200
++++ lin_tape-3.0.20/lin_tape_ioctl_tape.c	2017-08-01 15:08:53.208605776 +0200
+@@ -6554,7 +6554,11 @@
+ 	req->sense_len = 0;
+ #endif
+ 	req->timeout = timeout;
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,12,0)
++	scsi_req(req)->retries = 0;
++#else
+ 	req->retries = 0;
++#endif
+ 
+ 	blk_execute_rq(req->q, NULL, req, 1);
+ 
+@@ -6563,7 +6567,11 @@
+ #else
+ 	*resid = req->resid_len;
+ #endif
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,12,0)
++	status_code = scsi_req(req)->result;
++#else
+ 	status_code = req->errors;
++#endif
+ 
+ 	if(buf_len && !use_sg) {
+ 		buf_ptr = (char*)buffer;
+--- lin_tape-3.0.20/lower.c.orig	2017-08-01 15:09:52.565988839 +0200
++++ lin_tape-3.0.20/lower.c	2017-08-01 15:11:23.877092947 +0200
+@@ -568,7 +568,11 @@
+ 	rq->sense_len = 0;
+ #endif
+ 	rq->timeout = pfo_cmd->timeout;
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,12,0)
++	scsi_req(rq)->retries = pfo_cmd->retries;
++#else
+ 	rq->retries = pfo_cmd->retries;
++#endif
+ 	rq->end_io_data = pfo_cmd;
+ 
+ 	blk_execute_rq(rq->q, NULL, rq, 1);
+@@ -589,7 +593,11 @@
+ 	pfo_cmd->resid_len = rq->resid_len;
+ 	pfo_cmd->sense_len = rq->sense_len;
+ #endif
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,12,0)
++	pfo_cmd->errors = scsi_req(rq)->result;
++#else
+ 	pfo_cmd->errors = rq->errors;
++#endif
+ 
+ 	blk_put_request(rq);
+ 	return pfo_cmd->errors;

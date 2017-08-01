@@ -69,21 +69,6 @@ diff -ur lin_tape-3.0.18/lin_tape_ioctl_tape.c lin_tape-3.0.18-4.11/lin_tape_ioc
  	status_code = req->errors;
  
  	if(buf_len && !use_sg) {
-diff -ur lin_tape-3.0.18/lin_tape_ioctl_tape.c.orig lin_tape-3.0.18-4.11/lin_tape_ioctl_tape.c.orig
---- lin_tape-3.0.18/lin_tape_ioctl_tape.c.orig	2017-02-23 19:14:41.000000000 +0100
-+++ lin_tape-3.0.18-4.11/lin_tape_ioctl_tape.c.orig	2017-05-09 21:45:14.232900215 +0200
-@@ -6465,7 +6465,11 @@
- 
- 	tmp_rq = (void*)sdev->request_queue;
- 	req->cmd_type = REQ_TYPE_BLOCK_PC;
-+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,10,0)
- 	req->cmd_flags |= REQ_QUIET;
-+#else
-+	req->cmd_flags |= RQF_QUIET;
-+#endif
- 
- 	if(buf_len) {
- 		mdata = kmalloc(sizeof(struct rq_map_data), GFP_KERNEL);
 diff -ur lin_tape-3.0.18/lin_tape_tape.h lin_tape-3.0.18-4.11/lin_tape_tape.h
 --- lin_tape-3.0.18/lin_tape_tape.h	2017-02-23 19:14:41.000000000 +0100
 +++ lin_tape-3.0.18-4.11/lin_tape_tape.h	2017-05-09 21:45:14.236233622 +0200
@@ -195,18 +180,3 @@ diff -ur lin_tape-3.0.18/lower.c lin_tape-3.0.18-4.11/lower.c
  	pfo_cmd->errors = rq->errors;
  
  	blk_put_request(rq);
-diff -ur lin_tape-3.0.18/stmp.c lin_tape-3.0.18-4.11/stmp.c
---- lin_tape-3.0.18/stmp.c	2017-05-10 00:36:01.955619894 +0200
-+++ lin_tape-3.0.18-4.11/stmp.c	2017-05-09 21:45:14.236233622 +0200
-@@ -611,7 +611,11 @@
- 	if (!req)
- 		return DRIVER_ERROR << 24;
- 
-+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,11,0)
-+	scsi_req_init(req);
-+#else
- 	req->cmd_type = REQ_TYPE_BLOCK_PC;
-+#endif
- #if LINUX_VERSION_CODE < KERNEL_VERSION(4,10,0)
- 	req->cmd_flags |= REQ_QUIET;
- #else
