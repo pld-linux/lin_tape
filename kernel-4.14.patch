@@ -1,0 +1,57 @@
+--- lin_tape-3.0.20/fo_util.c~	2017-05-27 21:22:52.000000000 +0200
++++ lin_tape-3.0.20/fo_util.c	2017-11-17 09:04:43.375810976 +0100
+@@ -169,7 +169,7 @@
+ 
+ /** Enable the change of the debug control flag.
+  *  /sys/bus/scsi/drivers/pfo/debug_flag */
+-static ssize_t pfoattr_debug_flag_set(struct device_driver *dev,
++static ssize_t debug_flag_store(struct device_driver *dev,
+ 					const char *buf, size_t count)
+ {
+ 	sscanf(buf, "0x%x", &pfo_debug_flag);
+@@ -179,19 +179,18 @@
+ 
+ /** Enable the cat of the debug control flag.
+  *  /sys/bus/scsi/drivers/pfo/debug_flag */
+-static ssize_t pfoattr_debug_flag_get(struct device_driver *ddp, char *buf)
++static ssize_t debug_flag_show(struct device_driver *ddp, char *buf)
+ {
+ 	DBG_DEBUG("");
+ 	return scnprintf(buf, PAGE_SIZE,
+ 		"debug flag=%04x\necho 0x<hexvalue> > debug_flag to change\n",
+ 		pfo_debug_flag);
+ }
+-static DRIVER_ATTR(debug_flag, S_IRUGO|S_IWUSR|S_IWGRP,
+-			pfoattr_debug_flag_get, pfoattr_debug_flag_set);
++static DRIVER_ATTR_RW(debug_flag);
+ 
+ /** Enable the cat of the debug buffer.
+  *  /sys/bus/scsi/drivers/pfo/debug_buffer */
+-static ssize_t pfoattr_debug_buffer_get(struct device_driver *ddp, char *buf)
++static ssize_t debug_buffer_show(struct device_driver *ddp, char *buf)
+ {
+ 	DBG_DEBUG("");
+ 	if (debug_buffer[0] == '\001') {
+@@ -202,11 +201,11 @@
+ 		return strlen(buf);
+ 	}
+ }
+-static DRIVER_ATTR(debug_buffer, S_IRUGO, pfoattr_debug_buffer_get, NULL);
++static DRIVER_ATTR_RO(debug_buffer);
+ 
+ /** Enable the cat of the trace buffer.
+  *  /sys/bus/scsi/drivers/pfo/trace */
+-static ssize_t pfoattr_debug_trace_get(struct device_driver *ddp, char *buf)
++static ssize_t debug_trace_show(struct device_driver *ddp, char *buf)
+ {
+ 	char *the_buffer;
+ 	int strlenbuf = 0;
+@@ -232,7 +231,7 @@
+ 	}
+ 	return strlenbuf;
+ }
+-static DRIVER_ATTR(trace, S_IRUGO, pfoattr_debug_trace_get, NULL);
++static DRIVER_ATTR_RO(trace);
+ 
+ int init_debug(struct device_driver *pfo_gendrv)
+ {
