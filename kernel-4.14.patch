@@ -42,7 +42,7 @@
  /** Enable the cat of the trace buffer.
   *  /sys/bus/scsi/drivers/pfo/trace */
 -static ssize_t pfoattr_debug_trace_get(struct device_driver *ddp, char *buf)
-+static ssize_t debug_trace_show(struct device_driver *ddp, char *buf)
++static ssize_t trace_show(struct device_driver *ddp, char *buf)
  {
  	char *the_buffer;
  	int strlenbuf = 0;
@@ -54,4 +54,218 @@
 +static DRIVER_ATTR_RO(trace);
  
  int init_debug(struct device_driver *pfo_gendrv)
+ {
+--- lin_tape-3.0.20/intercept.c~	2017-11-18 09:30:20.000000000 +0100
++++ lin_tape-3.0.20/intercept.c	2017-11-18 09:32:26.165820320 +0100
+@@ -299,7 +299,7 @@
+ /** Perform the operations the customer has requested when they wrote to
+  * /sys/bus/scsi/drivers/pfo/ctrl
+  */
+-static ssize_t pfoattr_ctrl_set(struct device_driver *dev, const char *buf,
++static ssize_t ctrl_store(struct device_driver *dev, const char *buf,
+ 				size_t count)
+ {
+ 	intercept_ctrl(NULL, buf, count);
+@@ -310,23 +310,22 @@
+  * /sys/bus/scsi/drivers/pfo/ctrl
+  * @return string length
+  */
+-static ssize_t pfoattr_ctrl_get(struct device_driver *ddp, char *buf)
++static ssize_t ctrl_show(struct device_driver *ddp, char *buf)
+ {
+ 	return resolve_ctrl_get(buf, PAGE_SIZE);
+ }
+-static DRIVER_ATTR(ctrl, S_IRUGO|S_IWUSR|S_IWGRP, pfoattr_ctrl_get,
+-				pfoattr_ctrl_set);
++static DRIVER_ATTR_RW(ctrl);
+ 
+ 
+ /** Create the text the customer will see when they read
+  * /sys/bus/scsi/drivers/pfo/version
+  * @return string length
+  */
+-static ssize_t pfo_version_show(struct device_driver *ddd, char *buf)
++static ssize_t version_show(struct device_driver *ddd, char *buf)
+ {
+ 	return snprintf(buf, PAGE_SIZE, "[%s]\n", PFO_DATE_STR);
+ }
+-static DRIVER_ATTR(version, S_IRUGO, pfo_version_show, NULL);
++static DRIVER_ATTR_RO(version);
+ 
+ static ssize_t devattr_vendor(struct device *dev,
+ 				struct device_attribute *attr, char *buf)
+--- lin_tape-3.0.20/lin_tape_scsi_config.c~	2017-05-27 21:22:51.000000000 +0200
++++ lin_tape-3.0.20/lin_tape_scsi_config.c	2017-11-18 09:36:47.106483198 +0100
+@@ -47,7 +47,7 @@
+ *                                                                              *
+ *******************************************************************************/
+ 
+-static ssize_t tape_version_show(struct device_driver* driver, char* buf)
++static ssize_t version_show(struct device_driver* driver, char* buf)
+ {
+ 	int rc;
+ 
+@@ -57,7 +57,7 @@
+ 	return rc;
+ } /* tape_version_show() */
+ 
+-DRIVER_ATTR(version, 0444, tape_version_show, NULL);
++DRIVER_ATTR_RO(version);
+ 
+ /*******************************************************************************
+ *                                                                              *
+@@ -112,7 +112,7 @@
+ 
+ } /* lin_tape_debug_store() */
+ 
+-DRIVER_ATTR(lin_tape_debug, 0660, lin_tape_debug_show, lin_tape_debug_store);
++DRIVER_ATTR_RW(lin_tape_debug);
+ 
+ /*******************************************************************************
+ *                                                                              *
+@@ -167,7 +167,7 @@
+ 
+ } /* auto_logging_store() */
+ 
+-DRIVER_ATTR(auto_logging, 0660, auto_logging_show, auto_logging_store);
++DRIVER_ATTR_RW(auto_logging);
+ 
+ /*******************************************************************************
+ *                                                                              *
+@@ -221,7 +221,7 @@
+ 
+ } /* petro_store() */
+ 
+-DRIVER_ATTR(petro, 0660, petro_show, petro_store);
++DRIVER_ATTR_RW(petro);
+ 
+ /*******************************************************************************
+ *                                                                              *
+@@ -276,7 +276,7 @@
+ 
+ } /* support_dio_store() */
+ 
+-DRIVER_ATTR(support_dio, 0660, support_dio_show, support_dio_store);
++DRIVER_ATTR_RW(support_dio);
+ 
+ /*******************************************************************************
+ *                                                                              *
+@@ -303,7 +303,7 @@
+ 	return rc;
+ } /* wait_on_config_show() */
+ 
+-DRIVER_ATTR(wait_on_config, 0444, wait_on_config_show, NULL);
++DRIVER_ATTR_RO(wait_on_config);
+ 
+ /*******************************************************************************
+ *                                                                              *
+@@ -357,8 +357,7 @@
+ 	return count;
+ } /* changer_open_reserve_show() */
+ 
+-DRIVER_ATTR(changer_open_reserve, 0660, changer_open_reserve_show,
+-	changer_open_reserve_store);
++DRIVER_ATTR_RW(changer_open_reserve);
+ 
+ /*******************************************************************************
+ *                                                                              *
+@@ -412,9 +411,7 @@
+ 	return count;
+ } /* default_sys_encryption_proxy_store() */
+ 
+-DRIVER_ATTR(default_sys_encryption_proxy, 0644,
+-		default_sys_encryption_proxy_show,
+-		default_sys_encryption_proxy_store);
++DRIVER_ATTR_RW(default_sys_encryption_proxy);
+ 
+ /*******************************************************************************
+ *                                                                              *
+@@ -470,9 +467,7 @@
+ 	return count;
+ } /* default_sys_encryption_write_show() */
+ 
+-DRIVER_ATTR(default_sys_encryption_write, 0644,
+-		default_sys_encryption_write_show,
+-		default_sys_encryption_write_store);
++DRIVER_ATTR_RW(default_sys_encryption_write);
+ 
+ /*******************************************************************************
+ *                                                                              *
+@@ -528,8 +523,7 @@
+ 
+ } /* disable_density_on_open_store() */
+ 
+-DRIVER_ATTR(disable_density_on_open, 0660, disable_density_on_open_show,
+-	disable_density_on_open_store);
++DRIVER_ATTR_RW(disable_density_on_open);
+ 
+ /*******************************************************************************
+ *                                                                              *
+@@ -584,8 +578,7 @@
+ 
+ } /* dynamic_attributes_store() */
+ 
+-DRIVER_ATTR(dynamic_attributes, 0660, dynamic_attributes_show,
+-	dynamic_attributes_store);
++DRIVER_ATTR_RW(dynamic_attributes);
+ 
+ /*******************************************************************************
+ *                                                                              *
+@@ -640,7 +633,7 @@
+ 
+ } /* disable_auto_drive_dump_store() */
+ 
+-DRIVER_ATTR(disable_auto_drive_dump, 0660, disable_auto_drive_dump_show, disable_auto_drive_dump_store);
++DRIVER_ATTR_RW(disable_auto_drive_dump);
+ 
+ /*******************************************************************************
+ *                                                                              *
+@@ -695,7 +688,7 @@
+ 
+ } /* busy_retry_store() */
+ 
+-DRIVER_ATTR(busy_retry, 0660, busy_retry_show, busy_retry_store);
++DRIVER_ATTR_RW(busy_retry);
+ 
+ /*******************************************************************************
+ *                                                                              *
+--- lin_tape-3.0.20/stmp.c~	2017-11-18 09:30:20.000000000 +0100
++++ lin_tape-3.0.20/stmp.c	2017-11-18 09:39:11.483862824 +0100
+@@ -5473,29 +5473,29 @@
+ #else // < 4.4.21
+ 
+ /* The sysfs driver interface. Read-only at the moment */
+-static ssize_t st_try_direct_io_show(struct device_driver *ddp, char *buf)
++static ssize_t try_direct_io_show(struct device_driver *ddp, char *buf)
+ {
+ 	return snprintf(buf, PAGE_SIZE, "%d\n", try_direct_io);
+ }
+-static DRIVER_ATTR(try_direct_io, S_IRUGO, st_try_direct_io_show, NULL);
++static DRIVER_ATTRRO(try_direct_io);
+ 
+-static ssize_t st_fixed_buffer_size_show(struct device_driver *ddp, char *buf)
++static ssize_t fixed_buffer_size_show(struct device_driver *ddp, char *buf)
+ {
+ 	return snprintf(buf, PAGE_SIZE, "%d\n", st_fixed_buffer_size);
+ }
+-static DRIVER_ATTR(fixed_buffer_size, S_IRUGO, st_fixed_buffer_size_show, NULL);
++static DRIVER_ATTR_RW(fixed_buffer_size);
+ 
+-static ssize_t st_max_sg_segs_show(struct device_driver *ddp, char *buf)
++static ssize_t max_sg_segs_show(struct device_driver *ddp, char *buf)
+ {
+ 	return snprintf(buf, PAGE_SIZE, "%d\n", st_max_sg_segs);
+ }
+-static DRIVER_ATTR(max_sg_segs, S_IRUGO, st_max_sg_segs_show, NULL);
++static DRIVER_ATTR_RO(max_sg_segs);
+ 
+-static ssize_t st_version_show(struct device_driver *ddd, char *buf)
++static ssize_t version_show(struct device_driver *ddd, char *buf)
+ {
+ 	return snprintf(buf, PAGE_SIZE, "[%s]\n", verstr);
+ }
+-static DRIVER_ATTR(version, S_IRUGO, st_version_show, NULL);
++static DRIVER_ATTR_RO(version);
+ 
+ static int do_create_sysfs_files(void)
  {
