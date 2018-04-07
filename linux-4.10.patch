@@ -1,105 +1,81 @@
-diff -ur lin_tape-3.0.8/lin_tape_ioctl_tape.c lin_tape-3.0.8-4.10/lin_tape_ioctl_tape.c
---- lin_tape-3.0.8/lin_tape_ioctl_tape.c	2016-02-23 20:57:52.000000000 +0100
-+++ lin_tape-3.0.8-4.10/lin_tape_ioctl_tape.c	2017-03-25 21:10:22.094478668 +0100
-@@ -6456,7 +6456,11 @@
+diff -ur lin_tape-3.0.23/lin_tape_ioctl_tape.c lin_tape-3.0.23-4.10/lin_tape_ioctl_tape.c
+--- lin_tape-3.0.23/lin_tape_ioctl_tape.c	2018-04-08 00:40:34.811170201 +0200
++++ lin_tape-3.0.23-4.10/lin_tape_ioctl_tape.c	2018-04-08 00:39:08.512197099 +0200
+@@ -6471,7 +6471,7 @@
  
  	tmp_rq = (void*)sdev->request_queue;
  	req->cmd_type = REQ_TYPE_BLOCK_PC;
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(4,4,73)
 +#if LINUX_VERSION_CODE < KERNEL_VERSION(4,10,0)
  	req->cmd_flags |= REQ_QUIET;
-+#else
-+	req->cmd_flags |= RQF_QUIET;
-+#endif
- 
- 	if(buf_len) {
- 		mdata = kmalloc(sizeof(struct rq_map_data), GFP_KERNEL);
-diff -ur lin_tape-3.0.8/stmp.c lin_tape-3.0.8-4.10/stmp.c
---- lin_tape-3.0.8/stmp.c	2017-03-25 21:11:10.039325377 +0100
-+++ lin_tape-3.0.8-4.10/stmp.c	2017-03-25 21:10:48.338642620 +0100
-@@ -624,7 +624,11 @@
+ #else
+ 	req->cmd_flags |= RQF_QUIET;
+diff -ur lin_tape-3.0.23/stmp.c lin_tape-3.0.23-4.10/stmp.c
+--- lin_tape-3.0.23/stmp.c	2018-04-08 00:40:34.814503623 +0200
++++ lin_tape-3.0.23-4.10/stmp.c	2018-04-08 00:39:45.023173000 +0200
+@@ -688,7 +688,7 @@
  #else
  	req->cmd_type = REQ_TYPE_BLOCK_PC;
  #endif
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(4,4,73)
 +#if LINUX_VERSION_CODE < KERNEL_VERSION(4,10,0)
  	req->cmd_flags |= REQ_QUIET;
-+#else
-+	req->cmd_flags |= RQF_QUIET;
-+#endif
- 
- 	mdata->null_mapped = 1;
- 
-diff -ur lin_tape-3.0.8/upper.c lin_tape-3.0.8-4.10/upper.c
---- lin_tape-3.0.8/upper.c	2017-03-25 21:11:10.022658187 +0100
-+++ lin_tape-3.0.8-4.10/upper.c	2017-03-25 21:09:10.232174474 +0100
-@@ -89,7 +89,11 @@
+ #else
+ 	req->cmd_flags |= RQF_QUIET;
+diff -ur lin_tape-3.0.23/upper.c lin_tape-3.0.23-4.10/upper.c
+--- lin_tape-3.0.23/upper.c	2018-04-08 00:40:34.814503623 +0200
++++ lin_tape-3.0.23-4.10/upper.c	2018-04-08 00:40:20.187446091 +0200
+@@ -89,7 +89,7 @@
  	pfo_cmd.timeout = timeout;
  	pfo_cmd.retries = retries;
  	pfo_cmd.iov_count = 0;
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(4,4,73)
 +#if LINUX_VERSION_CODE < KERNEL_VERSION(4,10,0)
  	pfo_cmd.flags = flags | REQ_QUIET;
-+#else
-+	pfo_cmd.flags = flags | RQF_QUIET;
-+#endif
- 	pfo_cmd.mdata = NULL;
- 	pfo_cmd.raw_sense = sense;
- 	pfo_cmd.sense_len = 0;
-@@ -338,7 +342,11 @@
+ #else
+ 	pfo_cmd.flags = flags | RQF_QUIET;
+@@ -352,7 +352,7 @@
  	pfo_cmd.cmd_len = hdr->cmd_len;
  	pfo_cmd.buffer = NULL;
  	pfo_cmd.bufflen = 0;
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(4,4,73)
 +#if LINUX_VERSION_CODE < KERNEL_VERSION(4,10,0)
  	pfo_cmd.flags = REQ_QUIET;
-+#else
-+	pfo_cmd.flags = RQF_QUIET;
-+#endif
- 	pfo_cmd.source = PFO_SOURCE_IOCTL;
- 	pfo_cmd.iov_count = 0;
- 	pfo_cmd.mdata = NULL;
-@@ -453,7 +461,11 @@
+ #else
+ 	pfo_cmd.flags = RQF_QUIET;
+@@ -488,7 +488,7 @@
  	pfo_cmd.cmd_len = hdr->cmd_len;
  	pfo_cmd.buffer = NULL;
  	pfo_cmd.bufflen = 0;
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(4,4,73)
 +#if LINUX_VERSION_CODE < KERNEL_VERSION(4,10,0)
  	pfo_cmd.flags = REQ_QUIET;
-+#else
-+	pfo_cmd.flags = RQF_QUIET;
-+#endif
- 	pfo_cmd.source = PFO_SOURCE_IOCTL;
- 	pfo_cmd.iov_count = 0;
- 	pfo_cmd.mdata = NULL;
-@@ -658,7 +670,11 @@
+ #else
+ 	pfo_cmd.flags = RQF_QUIET;
+@@ -691,7 +691,7 @@
  	pfo_cmd.timeout = timeout;
  	pfo_cmd.retries = retries;
  	pfo_cmd.iov_count = 0;
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(4,4,73)
 +#if LINUX_VERSION_CODE < KERNEL_VERSION(4,10,0)
  	pfo_cmd.flags = REQ_QUIET;
-+#else
-+	pfo_cmd.flags = RQF_QUIET;
-+#endif
- 	pfo_cmd.mdata = NULL;
- 	pfo_cmd.raw_sense = sense;
- 	pfo_cmd.sense_len = 0;
-@@ -915,7 +931,11 @@
+ #else
+ 	pfo_cmd.flags = RQF_QUIET;
+@@ -952,7 +952,7 @@
  	pfo_cmd.buffer = buffer;
  	pfo_cmd.bufflen = bufflen;
  	pfo_cmd.retries = retries;
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(4,4,73)
 +#if LINUX_VERSION_CODE < KERNEL_VERSION(4,10,0)
  	pfo_cmd.flags = REQ_QUIET;
-+#else
-+	pfo_cmd.flags = RQF_QUIET;
-+#endif
- 	pfo_cmd.source = PFO_SOURCE_SG;
- 	pfo_cmd.iov_count = iov_count;
- 	pfo_cmd.mdata = mdata;
-@@ -954,7 +974,11 @@
+ #else
+ 	pfo_cmd.flags = RQF_QUIET;
+@@ -995,7 +995,7 @@
  	pfo_cmd.buffer = buffer;
  	pfo_cmd.bufflen = bufflen;
  	pfo_cmd.retries = retries;
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(4,4,73)
 +#if LINUX_VERSION_CODE < KERNEL_VERSION(4,10,0)
  	pfo_cmd.flags = REQ_QUIET;
-+#else
-+	pfo_cmd.flags = RQF_QUIET;
-+#endif
- 	pfo_cmd.source = PFO_SOURCE_ST;
- 	pfo_cmd.iov_count = 0;
- 	pfo_cmd.mdata = mdata;
+ #else
+ 	pfo_cmd.flags = RQF_QUIET;

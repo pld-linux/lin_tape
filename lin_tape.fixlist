@@ -4,6 +4,17 @@ Fixlist for Linux IBM Tape Device Driver (lin_tape)
 
  Level      Date                   Description
 ---------------------------------------------------------------
+3.0.23 11/03/2017   - Initial support for RHEL 6.9 (min. kernel version 2.6.32-696)
+                    - Support for LTO8
+                    - Fix for reservation conflict when reserve_6 used
+                    - Fix for failover after device rediscovery (introduced at 3.0.20)
+                    - Fix for device name after removal (introduced at 3.0.20)
+                    - Fix for read with resid through join interface
+3.0.21 09/14/2017   - Fix to process sense data from srb combination flags
+                    - Enhancement to not attempt failover when only one path left
+                    - Fix for crash on concurrency (multiple process attempting to use the same device in stress scenario)
+                    - Fix for returning ENXIO instead attempting failover (introduced at 3.0.20)
+                    - Join driver to retry attachment on LUN not serlf configured
 3.0.20 06/09/2017   - Reincorporated join driver (lin_tape_as_sfmp) with new build flag: -with sfmp
                     - Work around for wrong SN reported by Inq. page 80h after failback
                     - Fix for crash when HBA driver removed before lin_tape
@@ -15,7 +26,7 @@ Fixlist for Linux IBM Tape Device Driver (lin_tape)
                     - Initial support for SLES 12 SP2 (min. kernel version 4.4.21-69)
                     - Initial support for RHEL 7.3 (min. kernel version 3.10.0-514)
                     - Initial support for RHEL 7.3 Power LE (min. kernel version 3.10.0-514)
-                    - Initial support for TS1155
+                    - Support for TS4300
 3.0.18 03/08/2017   - Prevent crash from double delete objects on removal during wait scenarios (introduced at 2.2.0)
                     - lin_tape_as_sfmp not supported in this version
                     - Installation for blacklist.conf enhancements

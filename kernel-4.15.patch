@@ -1,0 +1,34 @@
+diff -ur lin_tape-3.0.23/upper.c lin_tape-3.0.23.iov/upper.c
+--- lin_tape-3.0.23/upper.c	2018-04-07 22:18:09.417415364 +0200
++++ lin_tape-3.0.23.iov/upper.c	2018-04-07 22:19:26.582769230 +0200
+@@ -388,6 +388,22 @@
+ 	if (hdr->iovec_count) {
+ 		const int size = sizeof(struct sg_iovec) * hdr->iovec_count;
+ 		size_t iov_data_len;
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,15,0)
++		struct iov_iter i;
++
++		sg_iov = kmalloc(size, GFP_KERNEL);
++		if (!sg_iov) {
++			ret = -ENOMEM;
++			goto out;
++		}
++
++		ret = import_iovec(hdr->dxfer_direction == SG_DXFER_TO_DEV ? WRITE : READ, hdr->dxferp, hdr->iovec_count, 0, (struct iovec **)&sg_iov, &i);
++		if (ret < 0)
++			goto out;
++
++		iov_iter_truncate(&i, hdr->dxfer_len);
++		iov_data_len = hdr->dxfer_len;
++#else
+ 		struct iovec *iov;
+ 		int i;
+ 
+@@ -426,6 +442,7 @@
+ 							hdr->dxfer_len);
+ 			iov_data_len = hdr->dxfer_len;
+ 		}
++#endif
+ 
+ 		pfo_cmd.buffer = sg_iov;
+ 		pfo_cmd.bufflen = iov_data_len;

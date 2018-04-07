@@ -20,7 +20,7 @@ diff -ur lin_tape-3.0.18/Makefile lin_tape-3.0.18-ifdefs/Makefile
 diff -ur lin_tape-3.0.18/pfo.h lin_tape-3.0.18-ifdefs/pfo.h
 --- lin_tape-3.0.18/pfo.h	2017-02-23 19:14:41.000000000 +0100
 +++ lin_tape-3.0.18-ifdefs/pfo.h	2017-05-09 21:06:34.117699008 +0200
-@@ -26,109 +26,6 @@
+@@ -26,133 +26,6 @@
   * will build for various releases of Linux.  This is how
   * we track different versions using ifdef in the source.
   */
@@ -94,6 +94,18 @@ diff -ur lin_tape-3.0.18/pfo.h lin_tape-3.0.18-ifdefs/pfo.h
 -#define BEFORE_RH_71 1
 -#define BEFORE_RH_72 1
 -#endif
+-#ifdef KERNELVERSION_2_6_32_696
+-#define AFTER_RH_62 1
+-#define AFTER_RH_63 1
+-#define AFTER_RH_64 1
+-#define AFTER_RH_65 1
+-#define AFTER_RH_66 1
+-#define AFTER_RH_67 1
+-#define AFTER_RH_68 1
+-#define BEFORE_RH_70 1
+-#define BEFORE_RH_71 1
+-#define BEFORE_RH_72 1
+-#endif
 -#ifdef KERNELVERSION_3_10_0_123
 -#define AFTER_RH_62 1
 -#define AFTER_RH_63 1
@@ -127,13 +139,25 @@ diff -ur lin_tape-3.0.18/pfo.h lin_tape-3.0.18-ifdefs/pfo.h
 -#define AFTER_RH_71 1
 -#endif
 -#ifdef KERNELVERSION_3_10_0_514
+-#define AFTER_RH_62 1
+-#define AFTER_RH_63 1
+-#define AFTER_RH_64 1
+-#define AFTER_RH_65 1
+-#define AFTER_RH_66 1
+-#define AFTER_RH_67 1
+-#define AFTER_RH_6x 1
+-#define AFTER_RH_70 1
+-#define AFTER_RH_71 1
+-#define AFTER_RH_72 1
+-#endif
+-#ifdef KERNELVERSION_3_10_0_693
  #define AFTER_RH_62 1
  #define AFTER_RH_63 1
  #define AFTER_RH_64 1
 @@ -126,7 +35,6 @@
- #define AFTER_RH_70 1
  #define AFTER_RH_71 1
  #define AFTER_RH_72 1
+ #define AFTER_RH_73 1
 -#endif
  
  /* Misc defines needed so source is same for all versions of Linux */
