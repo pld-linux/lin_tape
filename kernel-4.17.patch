@@ -1,0 +1,14 @@
+--- lin_tape-3.0.23/intercept.c~	2018-06-18 19:40:39.000000000 +0200
++++ lin_tape-3.0.23/intercept.c	2018-06-18 19:43:27.059968542 +0200
+@@ -1365,7 +1365,11 @@
+ 		/* Only for fo devices */
+ 		/* This 'if' must match the one above in create unique */
+ #if LINUX_VERSION_CODE >= KERNEL_VERSION(4,11,0)
++  #if LINUX_VERSION_CODE >= KERNEL_VERSION(4,17,0)
++		sdev->request_queue = blk_alloc_queue_node(GFP_KERNEL, NUMA_NO_NODE, NULL);
++  #else
+ 		sdev->request_queue = blk_alloc_queue_node(GFP_KERNEL, NUMA_NO_NODE);
++  #endif
+ 		__scsi_init_queue(sdev->host, sdev->request_queue);
+ #else
+ 		sdev->request_queue = __scsi_alloc_queue(sdev->host, NULL);
