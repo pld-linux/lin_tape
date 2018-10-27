@@ -9,9 +9,9 @@
 +#else
  	req->retries = 0;
 +#endif
- 
  	blk_execute_rq(req->q, NULL, req, 1);
- 
+ #if LINUX_VERSION_CODE >= KERNEL_VERSION(4,11,0)
+ 	*resid = scsi_req(req)->resid_len;
 @@ -6563,7 +6567,11 @@
  #else
  	*resid = req->resid_len;

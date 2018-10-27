@@ -1,12 +1,15 @@
 --- lin_tape-3.0.18/lin_tape_scsi_tape.c~	2017-02-23 19:14:41.000000000 +0100
 +++ lin_tape-3.0.18/lin_tape_scsi_tape.c	2017-05-09 21:28:19.916320963 +0200
-@@ -11838,10 +11838,9 @@
+@@ -11838,13 +11838,9 @@
  
  	down_read(&current->mm->mmap_sem);
- 
--#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,4,73)
--	mapped_pages = get_user_pages_unlocked((unsigned long)user_location, number_pages,
--			                      pages, rw);
+ #if !defined (UBUNTUVERSION)
+-#if LINUX_VERSION_CODE == KERNEL_VERSION(4,4,73) \
+-	|| (LINUX_VERSION_CODE >= KERNEL_VERSION(4,4,92) && LINUX_VERSION_CODE < KERNEL_VERSION(4,4,103)) \
+-	|| defined(SLESKERNEL_4_4_103_6) \
+-	|| (LINUX_VERSION_CODE >= KERNEL_VERSION(4,4,114) && LINUX_VERSION_CODE < KERNEL_VERSION(4,6,0) && !defined(SLESSP2))
+-	mapped_pages = get_user_pages((unsigned long)user_location, number_pages,
+-			                      rw, pages, NULL);
 -
 +#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,9,0)
 +	mapped_pages = get_user_pages((ulong)user_location, number_pages,
@@ -14,24 +17,21 @@
  #elif LINUX_VERSION_CODE >= KERNEL_VERSION(4,6,0)
  	mapped_pages = get_user_pages((ulong)user_location, number_pages,
  			                      rw, 0, pages, NULL);
---- lin_tape-3.0.18/stmp.c~	2017-05-09 21:25:12.000000000 +0200
-+++ lin_tape-3.0.18/stmp.c	2017-05-09 21:29:19.121101188 +0200
-@@ -5205,11 +5205,13 @@
- 	if ((pages = kmalloc(max_pages * sizeof(*pages), GFP_KERNEL)) == NULL)
- 		return -ENOMEM;
+--- lin_tape-3.0.33/stmp.c~	2018-06-01 20:01:49.000000000 +0200
++++ lin_tape-3.0.33/stmp.c	2018-10-27 11:39:03.873330720 +0200
+@@ -5061,12 +5061,13 @@
  
--#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,4,73)
--	res = get_user_pages_unlocked(uaddr, nr_pages,
--			                      pages,
--								  rw == READ ? FOLL_WRITE : 0); /* don't force */
--
+         /* Try to fault in all of the necessary pages */
+         /* rw==READ means read from drive, write into memory area */
+-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4,4,114) && LINUX_VERSION_CODE < KERNEL_VERSION(4,6,0) && !defined(SLESSP2))
 +#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,9,0)
-+	res = get_user_pages_unlocked(
-+		uaddr,
-+		nr_pages,
+ 	res = get_user_pages_unlocked(
+ 		uaddr,
+ 		nr_pages,
 +		rw == READ ? FOLL_WRITE : 0,
-+		pages,
+ 		pages,
+-		rw == READ ? FOLL_WRITE : 0); /* don't force */
 +		NULL);
+ 
  #elif LINUX_VERSION_CODE >= KERNEL_VERSION(4,4,21)
-     /* Try to fault in all of the necessary pages */
-     /* rw==READ means read from drive, write into memory area */
+ 	res = get_user_pages_unlocked(

@@ -36,10 +36,10 @@ diff -ur lin_tape-3.0.18/lin_tape_ioctl_tape.c lin_tape-3.0.18-4.11/lin_tape_ioc
 +#else
  	req->cmd_type = REQ_TYPE_BLOCK_PC;
 +#endif
- #if LINUX_VERSION_CODE < KERNEL_VERSION(4,10,0)
+ #ifdef REQ_QUIET
  	req->cmd_flags |= REQ_QUIET;
  #else
-@@ -6536,17 +6540,29 @@
+@@ -6536,15 +6540,27 @@
  		bio = req->bio;
  	} /* if */
  
@@ -58,9 +58,7 @@ diff -ur lin_tape-3.0.18/lin_tape_ioctl_tape.c lin_tape-3.0.18-4.11/lin_tape_ioc
 +#endif
  	req->timeout = timeout;
  	req->retries = 0;
- 
  	blk_execute_rq(req->q, NULL, req, 1);
- 
 +#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,11,0)
 +	*resid = scsi_req(req)->resid_len;
 +#else

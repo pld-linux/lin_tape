@@ -1,7 +1,7 @@
 diff -ur lin_tape-3.0.18/Makefile lin_tape-3.0.18-ifdefs/Makefile
 --- lin_tape-3.0.18/Makefile	2017-05-09 21:11:32.977092391 +0200
 +++ lin_tape-3.0.18-ifdefs/Makefile	2017-05-09 21:05:59.610307494 +0200
-@@ -20,15 +20,6 @@
+@@ -20,27 +20,6 @@
  lin_tape-objs := join.o lin_tape_scsi_config.o lin_tape_scsi_tape.o lin_tape_scsi_trace.o \
               lin_tape_ioctl_tape.o lin_tape_ioctl_changer.o lin_tape_extra_ioctl.o
  
@@ -11,7 +11,19 @@ diff -ur lin_tape-3.0.18/Makefile lin_tape-3.0.18-ifdefs/Makefile
 -KERNELVER = $(shell uname -r 2>/dev/null|sed "s/[\.-]/_/g"|sed "s/\([0-9]*_[0-9]*_[0-9]*_[0-9]*\).*/\1/")
 -EXTRA_CFLAGS += -DKERNELVERSION_${KERNELVER}
 -else
+-UBUNTURELEASE := $(shell [ -f "/etc/os-release" ] && grep -qi Ubuntu /etc/os-release && echo 1 || echo 0)
+-ifeq ($(UBUNTURELEASE), 1)
+-EXTRA_CFLAGS += -DUBUNTUVERSION
+-else
 -EXTRA_CFLAGS += -DSLESVERSION
+-KERNELDIR ?= /lib/modules/$(shell uname -r)/build
+-KERNELVER = $(shell uname -r 2>/dev/null|sed "s/[\.-]/_/g"|sed "s/\([0-9]*_[0-9]*_[0-9]*_[0-9]*\).*/\1/")
+-EXTRA_CFLAGS += -DSLESKERNEL_${KERNELVER}
+-SLESSP2 := $(shell grep -qi SP2 /etc/*release && echo 1 || echo 0)
+-ifeq ($(SLESSP2), 1) 
+-EXTRA_CFLAGS += -DSLESSP2
+-endif
+-endif
 -endif
 -
  ifeq ($(SFMP), 1)
@@ -162,112 +174,3 @@ diff -ur lin_tape-3.0.18/pfo.h lin_tape-3.0.18-ifdefs/pfo.h
  
  /* Misc defines needed so source is same for all versions of Linux */
  #ifndef SDEV_TRANSPORT_OFFLINE
-diff -ur lin_tape-3.0.18/sgmp.c lin_tape-3.0.18-ifdefs/sgmp.c
---- lin_tape-3.0.18/sgmp.c	2017-02-23 19:14:41.000000000 +0100
-+++ lin_tape-3.0.18-ifdefs/sgmp.c	2017-05-09 21:10:20.295643954 +0200
-@@ -262,27 +262,12 @@
- {
- 	struct sg_fd *sfp = (struct sg_fd *)filp->private_data;
- 
--#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,0) && (!defined(SLESVERSION))
--	/* RHEL 7.0 and beyond */
- 	struct request_queue *q = sfp->parentdp->device->request_queue;
--#else
--#ifdef AFTER_RH_63
--	/* RHEL 6.4+ */
--	struct request_queue *q = sfp->parentdp->device->request_queue;
--#endif
--#endif
- 
- 	if (sfp->parentdp->device->type == TYPE_SCANNER)
- 		return 0;
- 
--#if LINUX_VERSION_CODE > KERNEL_VERSION(3,12,0) || defined(SLESVERSION)
- 	return blk_verify_command(cmd, filp->f_mode & FMODE_WRITE);
--#else
--	/* RHEL 6.4 and beyond */
--	return blk_verify_command(q, cmd, filp->f_mode & FMODE_WRITE);
--#endif
--//6.3 blk_verify_command(cmd, filp->f_mode & FMODE_WRITE);
--
- }
- 
- #if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,32)
-@@ -419,7 +404,7 @@
- #endif
- 		sdp->sgdebug = 0;
- 		q = sdp->device->request_queue;
--#if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,32) && (defined(SLESVERSION))
-+#if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,32)
- 		sdp->sg_tablesize = min(queue_max_hw_segments(q),
-                                 queue_max_phys_segments(q));
- #else
-@@ -1546,7 +1531,7 @@
- 		if ((sdp->sgdebug > 0) &&
- 		    ((CHECK_CONDITION == srp->header.masked_status) ||
- 		     (COMMAND_TERMINATED == srp->header.masked_status)))
--#if defined(AFTER_RH_71) || LINUX_VERSION_CODE >= KERNEL_VERSION(4,4,21)
-+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,4,21)
- 			__scsi_print_sense(sdp->device, "sg_cmd_done", sense, SCSI_SENSE_BUFFERSIZE);
- 
- #else
-@@ -1677,7 +1662,7 @@
- 	INIT_LIST_HEAD(&sdp->sfds);
- 	init_waitqueue_head(&sdp->o_excl_wait);
- 
--#if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,32) && (defined(SLESVERSION))
-+#if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,32)
- 	sdp->sg_tablesize = min(queue_max_hw_segments(q),
-                             queue_max_phys_segments(q));
- #else
-@@ -3069,7 +3054,7 @@
- 			      scsidp->id, scsidp->lun, (int) scsidp->type,
- 			      1,
- 			      (int) scsidp->queue_depth,
--#ifdef AFTER_RH_71
-+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,19,0)
- 				  (int) atomic_read(&scsidp->device_busy),
- #else
- 				  (int) scsidp->device_busy,
-diff -ur lin_tape-3.0.18/stmp.c lin_tape-3.0.18-ifdefs/stmp.c
---- lin_tape-3.0.18/stmp.c	2017-02-23 19:14:41.000000000 +0100
-+++ lin_tape-3.0.18-ifdefs/stmp.c	2017-05-09 21:11:01.113125428 +0200
-@@ -454,7 +454,7 @@
- 		       SRpnt->cmd[0], SRpnt->cmd[1], SRpnt->cmd[2],
- 		       SRpnt->cmd[3], SRpnt->cmd[4], SRpnt->cmd[5]);
- 		if (cmdstatp->have_sense)
--#if defined(AFTER_RH_70) || LINUX_VERSION_CODE >= KERNEL_VERSION(4,4,21)
-+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,4,21)
- 			__scsi_print_sense(STp->device, name, SRpnt->sense, SCSI_SENSE_BUFFERSIZE);
- 
- #else
-@@ -475,7 +475,7 @@
- 			 SRpnt->cmd[0] != MODE_SENSE &&
- 			 SRpnt->cmd[0] != TEST_UNIT_READY) {
- 
--#if defined(AFTER_RH_71) || LINUX_VERSION_CODE >= KERNEL_VERSION(4,4,21)
-+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,4,21)
- 			__scsi_print_sense(STp->device, name, SRpnt->sense, SCSI_SENSE_BUFFERSIZE);
- 
- #else
-diff -ur lin_tape-3.0.18/upper.c lin_tape-3.0.18-ifdefs/upper.c
---- lin_tape-3.0.18/upper.c	2017-02-23 19:14:41.000000000 +0100
-+++ lin_tape-3.0.18-ifdefs/upper.c	2017-05-09 21:09:37.868126006 +0200
-@@ -267,7 +267,7 @@
- 	if (copy_from_user(pfo_cmd->scsi_cmd, hdr->cmdp, hdr->cmd_len))
- 		return -EFAULT;
- 
--#if LINUX_VERSION_CODE > KERNEL_VERSION(3,12,0) || defined(SLESVERSION)
-+#if LINUX_VERSION_CODE > KERNEL_VERSION(3,12,0)
- 	if (blk_verify_command(pfo_cmd->scsi_cmd, mode & FMODE_WRITE))
- #else
- 	/* RHEL 6.4 and beyond */
-@@ -608,7 +608,7 @@
- 	if (in_len && copy_from_user(buffer, sic->data + cmdlen, in_len))
- 		goto error;
- 
--#if LINUX_VERSION_CODE > KERNEL_VERSION(3,12,0) || defined(SLESVERSION)
-+#if LINUX_VERSION_CODE > KERNEL_VERSION(3,12,0)
- 	err = blk_verify_command(scsi_cmd, mode & FMODE_WRITE);
- #else
- 	/* RHEL 6.4 and beyond */
