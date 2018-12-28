@@ -5,7 +5,7 @@
 # nothing to be placed to debuginfo package
 %define		_enable_debug_packages	0
 
-%define		rel	1
+%define		rel	2
 %define		pname	lin_tape
 Summary:	IBM Tape SCSI Device Driver for Linux
 Name:		%{pname}%{_alt_kernel}
@@ -26,6 +26,7 @@ Patch7:		kernel-4.14.patch
 Patch8:		kernel-4.15.patch
 Patch9:		kernel-4.17.patch
 Patch10:	kernel-4.19.patch
+Patch11:	linux-4.4.169.patch
 # System Storage, Tape systems, Tape drivers and software, Tape device drivers (Linux)
 URL:		http://www.ibm.com/support/fixcentral/
 BuildRequires:	rpmbuild(macros) >= 1.701
@@ -83,6 +84,7 @@ compatible platforms.\
 %patch8 -p1
 %patch9 -p1
 %patch10 -p1
+%patch11 -p1
 
 install -p %{SOURCE1} .
 
