@@ -1,7 +1,7 @@
 diff -ur lin_tape-3.0.18/Makefile lin_tape-3.0.18-ifdefs/Makefile
 --- lin_tape-3.0.18/Makefile	2017-05-09 21:11:32.977092391 +0200
 +++ lin_tape-3.0.18-ifdefs/Makefile	2017-05-09 21:05:59.610307494 +0200
-@@ -20,27 +20,6 @@
+@@ -20,26 +20,6 @@
  lin_tape-objs := join.o lin_tape_scsi_config.o lin_tape_scsi_tape.o lin_tape_scsi_trace.o \
               lin_tape_ioctl_tape.o lin_tape_ioctl_changer.o lin_tape_extra_ioctl.o
  
@@ -20,15 +20,14 @@ diff -ur lin_tape-3.0.18/Makefile lin_tape-3.0.18-ifdefs/Makefile
 -KERNELVER = $(shell uname -r 2>/dev/null|sed "s/[\.-]/_/g"|sed "s/\([0-9]*_[0-9]*_[0-9]*_[0-9]*\).*/\1/")
 -EXTRA_CFLAGS += -DSLESKERNEL_${KERNELVER}
 -SLESSP2 := $(shell grep -qi SP2 /etc/*release && echo 1 || echo 0)
--ifeq ($(SLESSP2), 1) 
+-ifeq ($(SLESSP2), 1)
 -EXTRA_CFLAGS += -DSLESSP2
 -endif
 -endif
 -endif
--
+ 
  ifeq ($(SFMP), 1)
  EXTRA_CFLAGS += -DSFMPENABLED
- endif
 diff -ur lin_tape-3.0.18/pfo.h lin_tape-3.0.18-ifdefs/pfo.h
 --- lin_tape-3.0.18/pfo.h	2017-02-23 19:14:41.000000000 +0100
 +++ lin_tape-3.0.18-ifdefs/pfo.h	2017-05-09 21:06:34.117699008 +0200
@@ -174,3 +173,120 @@ diff -ur lin_tape-3.0.18/pfo.h lin_tape-3.0.18-ifdefs/pfo.h
  
  /* Misc defines needed so source is same for all versions of Linux */
  #ifndef SDEV_TRANSPORT_OFFLINE
+--- lin_tape-3.0.52/lin_tape_scsi_config.h~	2020-04-04 21:53:09.000000000 +0200
++++ lin_tape-3.0.52/lin_tape_scsi_config.h	2020-04-04 21:56:46.600032193 +0200
+@@ -64,9 +64,6 @@
+     ("IBM Tape Drives and Libraries");
+ MODULE_LICENSE("GPL");
+ MODULE_VERSION("3.0.52");
+-#if defined(SLESVERSION)
+-MODULE_INFO(supported, "external");
+-#endif // defined
+ /* driver parameters */
+ int support_dio = 1;
+ module_param(support_dio, int, 0);
+--- lin_tape-3.0.52/sgmp.c~	2020-03-05 19:43:09.000000000 +0100
++++ lin_tape-3.0.52/sgmp.c	2020-04-04 21:57:56.793366544 +0200
+@@ -34,7 +34,7 @@
+  */
+ 
+ #include <linux/version.h>
+-#if !defined(SLESVERSION) && LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
+ /*
+  *  History:
+  *  Started: Aug 9 by Lawrence Foard (entropy@world.std.com),
+@@ -3012,7 +3012,7 @@
+ 	return 0;
+ }
+ #endif				/* CONFIG_SCSI_PROC_FS */
+-#elif !defined(SLESVERSION) && LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,0)
++#elif LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,0)
+ static int sg_version_num = 30536;	/* 2 digits for each component */
+ #define SG_VERSION_STR "3.5.36"
+ 
+@@ -6026,7 +6026,7 @@
+ }
+ 
+ #endif				/* CONFIG_SCSI_PROC_FS */
+-#elif !defined(SLESVERSION) && LINUX_VERSION_CODE == KERNEL_VERSION(2,6,32)
++#elif LINUX_VERSION_CODE == KERNEL_VERSION(2,6,32)
+ static int sg_version_num = 30534;	/* 2 digits for each component */
+ #define SG_VERSION_STR "3.5.34"
+ 
+--- lin_tape-3.0.52/stmp.c~	2020-03-05 19:43:09.000000000 +0100
++++ lin_tape-3.0.52/stmp.c	2020-04-04 21:58:35.473367112 +0200
+@@ -42,7 +42,7 @@
+ 
+  */
+ #include <linux/version.h>
+-#if !defined(SLESVERSION) && LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
+ /*
+    SCSI Tape Driver for Linux version 1.1 and newer. See the accompanying
+    file Documentation/scsi/st.txt for more information.
+@@ -5108,7 +5108,7 @@
+ 
+ 	return 0;
+ }
+-#elif !defined(SLESVERSION) && LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,0)
++#elif LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,0)
+ #include <linux/module.h>
+ #include <linux/fs.h>
+ #include <linux/kernel.h>
+@@ -10137,7 +10137,7 @@
+ 
+ 	return 0;
+ }
+-#elif !defined(SLESVERSION) && LINUX_VERSION_CODE == KERNEL_VERSION(2,6,32)
++#elif LINUX_VERSION_CODE == KERNEL_VERSION(2,6,32)
+ #include <linux/module.h>
+ #include <linux/fs.h>
+ #include <linux/kernel.h>
+--- lin_tape-3.0.52/upper.c~	2020-04-04 21:55:46.000000000 +0200
++++ lin_tape-3.0.52/upper.c	2020-04-04 21:59:12.536700966 +0200
+@@ -273,7 +273,7 @@
+ 	if (copy_from_user(pfo_cmd->scsi_cmd, hdr->cmdp, hdr->cmd_len))
+ 		return -EFAULT;
+ 
+-#if LINUX_VERSION_CODE > KERNEL_VERSION(3,12,0) && (defined(SLESVERSION) || defined(UBUNTUVERSION))
++#if LINUX_VERSION_CODE > KERNEL_VERSION(3,12,0)
+ 	if (blk_verify_command(pfo_cmd->scsi_cmd, mode & FMODE_WRITE))
+ #else
+ 	/* RHEL 6.4 and beyond */
+@@ -525,14 +525,12 @@
+ 		/* SG_IO howto says that the shorter of the two wins */
+ 		iov_data_len = iov_length((struct iovec *)iov,
+ 					hdr->iovec_count);
+-#if !defined (UBUNTUVERSION)
+ 		if (hdr->dxfer_len < iov_data_len) {
+ 			hdr->iovec_count = iov_shorten((struct iovec *)iov,
+ 							hdr->iovec_count,
+ 							hdr->dxfer_len);
+ 			iov_data_len = hdr->dxfer_len;
+ 		}
+-#endif
+ 		pfo_cmd.buffer = iov;
+ 		pfo_cmd.bufflen = iov_data_len;
+ 		pfo_cmd.iov_count = hdr->iovec_count;
+@@ -622,7 +620,7 @@
+ 	if (in_len && copy_from_user(buffer, sic->data + cmdlen, in_len))
+ 		goto error;
+ 
+-#if LINUX_VERSION_CODE > KERNEL_VERSION(3,12,0) && (defined(SLESVERSION) || defined(UBUNTUVERSION))
++#if LINUX_VERSION_CODE > KERNEL_VERSION(3,12,0)
+ 	err = blk_verify_command(scsi_cmd, mode & FMODE_WRITE);
+ #else
+ 	/* RHEL 6.4 and beyond */
+--- lin_tape-3.0.52/intercept.c~	2020-03-05 19:43:09.000000000 +0100
++++ lin_tape-3.0.52/intercept.c	2020-04-04 21:59:43.190034776 +0200
+@@ -2492,9 +2492,6 @@
+ MODULE_LICENSE("GPL");
+ MODULE_VERSION(PFO_VERSION_STR);
+ MODULE_INFO(date, PFO_DATE_STR);
+-#if defined(SLESVERSION)
+-MODULE_INFO(supported, "external");
+-#endif
+ #if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,32)
+ module_param(netbackup, int, 0444);
+ MODULE_PARM_DESC(netbackup, "!=0 to use with NetBackup application");

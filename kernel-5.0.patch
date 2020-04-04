@@ -1,9 +1,9 @@
 --- lin_tape-3.0.33/lin_tape_ioctl_tape.c~	2019-03-10 18:06:13.000000000 +0100
 +++ lin_tape-3.0.33/lin_tape_ioctl_tape.c	2019-03-10 18:11:48.544963300 +0100
 @@ -23,6 +23,7 @@
- #include "lin_tape_timeout_tape.h"
  #include "ibmekm/inc/dd_event.h"
  #include "lin_tape_scsi_tape.h"
+ #include <linux/delay.h>
 +#include <linux/ktime.h>
  
  /*****************************************************************************
@@ -42,14 +42,3 @@
  
  	/* tv.sec in structure timeval is a "long" integer
  	* it has 4 bytes in 32-bit kernel, but 8 bytes in 64-bit kernel
---- lin_tape-3.0.33/intercept.c~	2019-03-10 18:13:48.000000000 +0100
-+++ lin_tape-3.0.33/intercept.c	2019-03-10 18:16:23.483059816 +0100
-@@ -1362,7 +1362,7 @@
- 		/* Only for fo devices */
- 		/* This 'if' must match the one above in create unique */
- #if LINUX_VERSION_CODE >= KERNEL_VERSION(4,11,0)
--  #if LINUX_VERSION_CODE >= KERNEL_VERSION(4,17,0)
-+  #if LINUX_VERSION_CODE >= KERNEL_VERSION(4,17,0) && LINUX_VERSION_CODE < KERNEL_VERSION(5,0,0)
- 		sdev->request_queue = blk_alloc_queue_node(GFP_KERNEL, NUMA_NO_NODE, NULL);
-   #else
- 		sdev->request_queue = blk_alloc_queue_node(GFP_KERNEL, NUMA_NO_NODE);
