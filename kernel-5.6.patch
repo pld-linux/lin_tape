@@ -1,79 +1,9 @@
---- lin_tape-3.0.52/lin_tape_scsi_config.h~	2020-03-05 19:43:09.000000000 +0100
-+++ lin_tape-3.0.52/lin_tape_scsi_config.h	2020-04-04 21:53:09.046695460 +0200
-@@ -223,6 +223,7 @@
- {
- 	return single_open(file, tape_read_proc, NULL);
- }
-+#if LINUX_VERSION_CODE < KERNEL_VERSION(5,6,0)
- static struct file_operations tape_proc_ops = {
-     .owner   = THIS_MODULE,
-     .open    = tape_open_proc,
-@@ -230,6 +231,14 @@
-     .llseek  = seq_lseek,
-     .release = single_release,
- };
-+#else
-+static struct proc_ops tape_proc_ops = {
-+    .proc_open    = tape_open_proc,
-+    .proc_read    = seq_read,
-+    .proc_lseek  = seq_lseek,
-+    .proc_release = single_release,
-+};
-+#endif
- #endif
- 
- int rd_pc_initial
-@@ -255,6 +264,7 @@
- {
- 	return single_open(file, changer_read_proc, NULL);
- }
-+#if LINUX_VERSION_CODE < KERNEL_VERSION(5,6,0)
- static struct file_operations changer_proc_ops = {
-     .owner   = THIS_MODULE,
-     .open    = changer_open_proc,
-@@ -262,6 +272,14 @@
-     .llseek  = seq_lseek,
-     .release = single_release,
- };
-+#else
-+static struct proc_ops changer_proc_ops = {
-+    .proc_open    = changer_open_proc,
-+    .proc_read    = seq_read,
-+    .proc_lseek  = seq_lseek,
-+    .proc_release = single_release,
-+};
-+#endif
- #endif
- 
- static int status_read_proc
-@@ -273,6 +291,7 @@
- {
- 	return single_open(file, status_read_proc, NULL);
- }
-+#if LINUX_VERSION_CODE < KERNEL_VERSION(5,6,0)
- static struct file_operations status_proc_ops = {
-     .owner   = THIS_MODULE,
-     .open    = status_open_proc,
-@@ -280,6 +299,14 @@
-     .llseek  = seq_lseek,
-     .release = single_release,
- };
-+#else
-+static struct proc_ops status_proc_ops = {
-+    .proc_open    = status_open_proc,
-+    .proc_read    = seq_read,
-+    .proc_lseek  = seq_lseek,
-+    .proc_release = single_release,
-+};
-+#endif
- #endif
- 
- int rdstatus_pc_initial
---- lin_tape-3.0.52/lin_tape_ioctl_tape.c~	2020-03-05 19:43:09.000000000 +0100
-+++ lin_tape-3.0.52/lin_tape_ioctl_tape.c	2020-04-04 22:13:44.016713929 +0200
-@@ -25,6 +25,16 @@
- #include "lin_tape_scsi_tape.h"
+diff -urNp -x '*.orig' lin_tape-3.0.52.org/lin_tape_ioctl_tape.c lin_tape-3.0.52/lin_tape_ioctl_tape.c
+--- lin_tape-3.0.52.org/lin_tape_ioctl_tape.c	2021-02-24 22:06:04.675258765 +0100
++++ lin_tape-3.0.52/lin_tape_ioctl_tape.c	2021-02-24 22:06:04.715258642 +0100
+@@ -26,6 +26,16 @@
  #include <linux/delay.h>
+ #include <linux/ktime.h>
  
 +
 +#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,6,0)
@@ -88,7 +18,7 @@
  /*****************************************************************************
   *                                                                           *
   *              Tape Drive Ioctls                                            *
-@@ -2794,7 +2804,7 @@
+@@ -2795,7 +2805,7 @@ EXIT_LABEL:
  
  ssize_t tape_set_tod(struct tape_descriptor** drvp)
  {
@@ -97,7 +27,7 @@
  	struct tod_control* buffer = NULL;
  	struct tape_descriptor *drv = *drvp;
  	int now = 0, rc = STATUS_SUCCESS;
-@@ -2810,20 +2820,20 @@
+@@ -2811,20 +2821,20 @@ ssize_t tape_set_tod(struct tape_descrip
  		goto EXIT_LABEL;
  	} /* if */
  
@@ -121,7 +51,7 @@
  #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 0, 0)
  	do_gettimeofday(tv);
  #else
-@@ -8930,7 +8940,7 @@
+@@ -8940,7 +8950,7 @@ EXIT_LABEL:
  
  int erp_tod(struct tape_descriptor* drv, union cdb* tmp_cdb, char* sense_data)
  {
@@ -130,7 +60,7 @@
  	struct tod_control* tod_buf = NULL;
  	int now = 0, rc = -EIO;
  
-@@ -8940,7 +8950,7 @@
+@@ -8950,7 +8960,7 @@ int erp_tod(struct tape_descriptor* drv,
  		goto EXIT_LABEL;
  	} /* if */
  
@@ -139,7 +69,7 @@
  	if(!tv) {
  		rc = -ENOMEM;
  		goto EXIT_LABEL;
-@@ -8951,7 +8961,7 @@
+@@ -8961,7 +8971,7 @@ int erp_tod(struct tape_descriptor* drv,
  	if(rc != STATUS_SUCCESS) goto EXIT_LABEL;
  
  	/* get time info to set TOD */
@@ -148,3 +78,75 @@
  #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 0, 0)
  	do_gettimeofday(tv);
  #else
+diff -urNp -x '*.orig' lin_tape-3.0.52.org/lin_tape_scsi_config.h lin_tape-3.0.52/lin_tape_scsi_config.h
+--- lin_tape-3.0.52.org/lin_tape_scsi_config.h	2021-02-24 22:06:04.671925441 +0100
++++ lin_tape-3.0.52/lin_tape_scsi_config.h	2021-02-24 22:06:04.715258642 +0100
+@@ -220,6 +220,7 @@ static int tape_open_proc(struct inode *
+ {
+ 	return single_open(file, tape_read_proc, NULL);
+ }
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5,6,0)
+ static struct file_operations tape_proc_ops = {
+     .owner   = THIS_MODULE,
+     .open    = tape_open_proc,
+@@ -227,6 +228,14 @@ static struct file_operations tape_proc_
+     .llseek  = seq_lseek,
+     .release = single_release,
+ };
++#else
++static struct proc_ops tape_proc_ops = {
++    .proc_open    = tape_open_proc,
++    .proc_read    = seq_read,
++    .proc_lseek  = seq_lseek,
++    .proc_release = single_release,
++};
++#endif
+ #endif
+ 
+ int rd_pc_initial
+@@ -252,6 +261,7 @@ static int changer_open_proc(struct inod
+ {
+ 	return single_open(file, changer_read_proc, NULL);
+ }
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5,6,0)
+ static struct file_operations changer_proc_ops = {
+     .owner   = THIS_MODULE,
+     .open    = changer_open_proc,
+@@ -259,6 +269,14 @@ static struct file_operations changer_pr
+     .llseek  = seq_lseek,
+     .release = single_release,
+ };
++#else
++static struct proc_ops changer_proc_ops = {
++    .proc_open    = changer_open_proc,
++    .proc_read    = seq_read,
++    .proc_lseek  = seq_lseek,
++    .proc_release = single_release,
++};
++#endif
+ #endif
+ 
+ static int status_read_proc
+@@ -270,6 +288,7 @@ static int status_open_proc(struct inode
+ {
+ 	return single_open(file, status_read_proc, NULL);
+ }
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5,6,0)
+ static struct file_operations status_proc_ops = {
+     .owner   = THIS_MODULE,
+     .open    = status_open_proc,
+@@ -277,6 +296,14 @@ static struct file_operations status_pro
+     .llseek  = seq_lseek,
+     .release = single_release,
+ };
++#else
++static struct proc_ops status_proc_ops = {
++    .proc_open    = status_open_proc,
++    .proc_read    = seq_read,
++    .proc_lseek  = seq_lseek,
++    .proc_release = single_release,
++};
++#endif
+ #endif
+ 
+ int rdstatus_pc_initial
