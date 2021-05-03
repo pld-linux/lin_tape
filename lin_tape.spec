@@ -19,7 +19,8 @@ Source1:	%{pname}.fixlist
 Patch0:		use-module-dir.patch
 Patch1:		clean-ifdefs.patch
 Patch2:		kernel-5.8.patch
-Patch3:		kernel-5.12.patch
+Patch3:		kernel-5.10.patch
+Patch4:		kernel-5.12.patch
 # System Storage, Tape systems, Tape drivers and software, Tape device drivers (Linux)
 URL:		http://www.ibm.com/support/fixcentral/
 BuildRequires:	rpmbuild(macros) >= 1.701
@@ -71,6 +72,7 @@ compatible platforms.\
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
+%patch4 -p1
 
 install -p %{SOURCE1} .
 

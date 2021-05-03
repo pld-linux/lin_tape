@@ -5,7 +5,7 @@ diff -ur lin_tape-3.0.56/lin_tape_ioctl_tape.c lin_tape-3.0.56-5.12/lin_tape_ioc
  	srq->retries = 0;
  #endif
  	req->timeout = timeout;
-+#if LINUX_VERSION_CODE < KERNEL_VERSION(5,10,0)
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5,12,0)
  	blk_execute_rq(req->q, NULL, req, 1);
 +#else
 +	blk_execute_rq(NULL, req, 1);
@@ -25,75 +25,6 @@ diff -ur lin_tape-3.0.56/lin_tape_scsi_config.h lin_tape-3.0.56-5.12/lin_tape_sc
  MODULE_LICENSE("GPL");
  MODULE_VERSION("3.0.56");
  /* driver parameters */
-@@ -220,6 +218,7 @@
- {
- 	return single_open(file, tape_read_proc, NULL);
- }
-+#if LINUX_VERSION_CODE < KERNEL_VERSION(5,10,0)
- static struct file_operations tape_proc_ops = {
-     .owner   = THIS_MODULE,
-     .open    = tape_open_proc,
-@@ -227,6 +226,14 @@
-     .llseek  = seq_lseek,
-     .release = single_release,
- };
-+#else
-+static struct proc_ops tape_proc_ops = {
-+    .proc_open    = tape_open_proc,
-+    .proc_read    = seq_read,
-+    .proc_lseek  = seq_lseek,
-+    .proc_release = single_release,
-+};
-+#endif
- #endif
- 
- int rd_pc_initial
-@@ -252,6 +259,7 @@
- {
- 	return single_open(file, changer_read_proc, NULL);
- }
-+#if LINUX_VERSION_CODE < KERNEL_VERSION(5,10,0)
- static struct file_operations changer_proc_ops = {
-     .owner   = THIS_MODULE,
-     .open    = changer_open_proc,
-@@ -259,6 +267,14 @@
-     .llseek  = seq_lseek,
-     .release = single_release,
- };
-+#else
-+static struct proc_ops changer_proc_ops = {
-+    .proc_open    = changer_open_proc,
-+    .proc_read    = seq_read,
-+    .proc_lseek  = seq_lseek,
-+    .proc_release = single_release,
-+};
-+#endif
- #endif
- 
- static int status_read_proc
-@@ -270,6 +286,7 @@
- {
- 	return single_open(file, status_read_proc, NULL);
- }
-+#if LINUX_VERSION_CODE < KERNEL_VERSION(5,10,0)
- static struct file_operations status_proc_ops = {
-     .owner   = THIS_MODULE,
-     .open    = status_open_proc,
-@@ -277,6 +294,14 @@
-     .llseek  = seq_lseek,
-     .release = single_release,
- };
-+#else
-+static struct proc_ops status_proc_ops = {
-+    .proc_open    = status_open_proc,
-+    .proc_read    = seq_read,
-+    .proc_lseek  = seq_lseek,
-+    .proc_release = single_release,
-+};
-+#endif
- #endif
- 
- int rdstatus_pc_initial
 diff -ur lin_tape-3.0.56/lower.c lin_tape-3.0.56-5.12/lower.c
 --- lin_tape-3.0.56/lower.c	2020-12-07 05:40:22.000000000 +0100
 +++ lin_tape-3.0.56-5.12/lower.c	2021-05-03 22:17:26.597339365 +0200
@@ -101,7 +32,7 @@ diff -ur lin_tape-3.0.56/lower.c lin_tape-3.0.56-5.12/lower.c
  	rq->timeout = pfo_cmd->timeout;
  	rq->end_io_data = pfo_cmd;
  
-+#if LINUX_VERSION_CODE < KERNEL_VERSION(5,10,0)
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5,12,0)
  	blk_execute_rq(rq->q, NULL, rq, 1);
 +#else
 +	blk_execute_rq(NULL, rq, 1);
