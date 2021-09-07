@@ -9,12 +9,12 @@
 %define		pname	lin_tape
 Summary:	IBM Tape SCSI Device Driver for Linux
 Name:		%{pname}%{_alt_kernel}
-Version:	3.0.56
+Version:	3.0.57
 Release:	%{rel}%{?_pld_builder:@%{_kernel_ver_str}}
 License:	GPL v2/LGPL
 Group:		Base/Kernel
 Source0:	%{pname}-%{version}.tgz
-# Source0-md5:	78169618f77dc1c112f3b10b2c5fe9f7
+# Source0-md5:	63284cab941f80eeab7cfe64c3e74f12
 Source1:	%{pname}.fixlist
 Patch0:		use-module-dir.patch
 Patch1:		clean-ifdefs.patch

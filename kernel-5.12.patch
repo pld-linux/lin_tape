@@ -23,7 +23,7 @@ diff -ur lin_tape-3.0.56/lin_tape_scsi_config.h lin_tape-3.0.56-5.12/lin_tape_sc
 -MODULE_SUPPORTED_DEVICE
 -    ("IBM Tape Drives and Libraries");
  MODULE_LICENSE("GPL");
- MODULE_VERSION("3.0.56");
+ MODULE_VERSION("3.0.57");
  /* driver parameters */
 diff -ur lin_tape-3.0.56/lower.c lin_tape-3.0.56-5.12/lower.c
 --- lin_tape-3.0.56/lower.c	2020-12-07 05:40:22.000000000 +0100
