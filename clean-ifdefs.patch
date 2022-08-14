@@ -178,7 +178,7 @@ diff -ur lin_tape-3.0.18/pfo.h lin_tape-3.0.18-ifdefs/pfo.h
 @@ -64,9 +64,6 @@
      ("IBM Tape Drives and Libraries");
  MODULE_LICENSE("GPL");
- MODULE_VERSION("3.0.57");
+ MODULE_VERSION("3.0.60");
 -#if defined(SLESVERSION)
 -MODULE_INFO(supported, "external");
 -#endif // defined
