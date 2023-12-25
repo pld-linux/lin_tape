@@ -1,7 +1,51 @@
-diff -ur lin_tape-3.0.18/Makefile lin_tape-3.0.18-ifdefs/Makefile
---- lin_tape-3.0.18/Makefile	2017-05-09 21:11:32.977092391 +0200
-+++ lin_tape-3.0.18-ifdefs/Makefile	2017-05-09 21:05:59.610307494 +0200
-@@ -20,26 +20,6 @@
+Only in lin_tape-3.0.66-ifdefs: lin_tape.fixlist
+diff -ur lin_tape-3.0.66/lin_tape_scsi_tape.c lin_tape-3.0.66-ifdefs/lin_tape_scsi_tape.c
+--- lin_tape-3.0.66/lin_tape_scsi_tape.c	2023-08-08 23:45:15.000000000 +0200
++++ lin_tape-3.0.66-ifdefs/lin_tape_scsi_tape.c	2023-12-25 23:05:43.253011166 +0100
+@@ -2028,8 +2028,8 @@
+ 					&drv->tape_log_len, TRC_SCSI_IOC);
+ #ifdef KERNELVERSION_5_14_0_70
+ 			rc = scsi_ioctl(drv->dev_obj, command, (void*)arg);
+-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5,14,0) && (LINUX_VERSION_CODE < KERNEL_VERSION(5, 14, 1) || defined(SLESSP5))
+-			rc = scsi_ioctl(drv->dev_obj, filp->f_flags, command, (void*)arg);
++#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5,15,0)
++			rc = scsi_ioctl(drv->dev_obj, NULL, filp->f_flags, command, (void*)arg);
+ #else
+ 			rc = scsi_ioctl(drv->dev_obj, command, (void*)arg);
+ #endif
+@@ -5597,8 +5597,8 @@
+ 		log_changer((*chgp), TRC_SMCIOC_CMD, True);
+ #ifdef KERNELVERSION_5_14_0_70
+ 		rc = scsi_ioctl((*chgp)->dev_obj, command, (void*)arg);
+-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5,14,0) && (LINUX_VERSION_CODE < KERNEL_VERSION(5,14,1) || defined(SLESSP5))
+-		rc = scsi_ioctl((*chgp)->dev_obj, filp->f_flags, command, (void*)arg);
++#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5,15,0)
++		rc = scsi_ioctl((*chgp)->dev_obj, NULL, filp->f_flags, command, (void*)arg);
+ #else
+ 		rc = scsi_ioctl((*chgp)->dev_obj, command, (void*)arg);
+ #endif
+@@ -11556,7 +11556,7 @@
+ 
+ 	memset(pages, '\0', drv->supported_sg_tablesize * sizeof(struct page*));
+ 
+-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,14,0)
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,8,0)
+ 	down_read(&current->mm->mmap_lock);
+ #else
+ 	down_read(&current->mm->mmap_sem);
+@@ -11577,7 +11577,7 @@
+ 	mapped_pages = get_user_pages(current, current->mm,
+ 		(ulong)user_location, number_pages, rw, 0, pages, NULL);
+ #endif
+-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,14,0)
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,8,0)
+ 	up_read(&current->mm->mmap_lock);
+ #else
+ 	up_read(&current->mm->mmap_sem);
+diff -ur lin_tape-3.0.66/Makefile lin_tape-3.0.66-ifdefs/Makefile
+--- lin_tape-3.0.66/Makefile	2023-08-08 23:45:15.000000000 +0200
++++ lin_tape-3.0.66-ifdefs/Makefile	2023-12-25 23:02:51.396800274 +0100
+@@ -20,55 +20,10 @@
  lin_tape-objs := join.o lin_tape_scsi_config.o lin_tape_scsi_tape.o lin_tape_scsi_trace.o \
               lin_tape_ioctl_tape.o lin_tape_ioctl_changer.o lin_tape_extra_ioctl.o
  
@@ -20,21 +64,54 @@ diff -ur lin_tape-3.0.18/Makefile lin_tape-3.0.18-ifdefs/Makefile
 -KERNELVER = $(shell uname -r 2>/dev/null|sed "s/[\.-]/_/g"|sed "s/\([0-9]*_[0-9]*_[0-9]*_[0-9]*\).*/\1/")
 -EXTRA_CFLAGS += -DSLESKERNEL_${KERNELVER}
 -SLESSP2 := $(shell grep -qi SP2 /etc/*release && echo 1 || echo 0)
+-SLESSP5 := $(shell grep -qi SP5 /etc/*release && echo 1 || echo 0)
 -ifeq ($(SLESSP2), 1)
 -EXTRA_CFLAGS += -DSLESSP2
 -endif
+-ifeq ($(SLESSP5), 1)
+-EXTRA_CFLAGS += -DSLESSP5
 -endif
 -endif
- 
+-endif
+-
  ifeq ($(SFMP), 1)
  EXTRA_CFLAGS += -DSFMPENABLED
-diff -ur lin_tape-3.0.18/pfo.h lin_tape-3.0.18-ifdefs/pfo.h
---- lin_tape-3.0.18/pfo.h	2017-02-23 19:14:41.000000000 +0100
-+++ lin_tape-3.0.18-ifdefs/pfo.h	2017-05-09 21:06:34.117699008 +0200
-@@ -26,133 +26,6 @@
-  * will build for various releases of Linux.  This is how
-  * we track different versions using ifdef in the source.
-  */
+ endif
+ 
+-PROC := $(shell uname -m)
+-ifeq ($(UBUNTURELEASE), 0)
+-ifeq ($(PROC), ppc64)
+-EXTRA_CFLAGS += -m64
+-endif
+-
+-ifeq ($(PROC), powerpc64)
+-EXTRA_CFLAGS += -m64
+-endif
+-
+-ifeq ($(PROC), powerpc)
+-EXTRA_CFLAGS += -m64 -msoft-float
+-LDFLAGS += -melf64ppc
+-endif
+-
+-ifeq ($(PROC), x86_64)
+-EXTRA_CFLAGS += -mcmodel=kernel
+-endif
+-endif
+-
+ VERSION := $(word 1,$(VERSIONRELEASE))
+ RELEASE := $(word 2,$(VERSIONRELEASE))
+ ifeq ($(RELEASE),)
+diff -ur lin_tape-3.0.66/pfo.h lin_tape-3.0.66-ifdefs/pfo.h
+--- lin_tape-3.0.66/pfo.h	2023-08-08 23:45:15.000000000 +0200
++++ lin_tape-3.0.66-ifdefs/pfo.h	2023-12-25 23:02:51.400133506 +0100
+@@ -23,149 +23,6 @@
+ 
+ #include "apfo.h"
+ #include <scsi/scsi_ioctl.h>
+-/* The intent of the following defines is that the code
+- * will build for various releases of Linux.  This is how
+- * we track different versions using ifdef in the source.
+- */
 -#ifdef KERNELVERSION_2_6_32_220
 -#define BEFORE_RH_63 1
 -#define BEFORE_RH_64 1
@@ -162,99 +239,59 @@ diff -ur lin_tape-3.0.18/pfo.h lin_tape-3.0.18-ifdefs/pfo.h
 -#define AFTER_RH_72 1
 -#endif
 -#ifdef KERNELVERSION_3_10_0_693
- #define AFTER_RH_62 1
- #define AFTER_RH_63 1
- #define AFTER_RH_64 1
-@@ -126,7 +35,6 @@
- #define AFTER_RH_71 1
- #define AFTER_RH_72 1
- #define AFTER_RH_73 1
+-#define AFTER_RH_62 1
+-#define AFTER_RH_63 1
+-#define AFTER_RH_64 1
+-#define AFTER_RH_65 1
+-#define AFTER_RH_66 1
+-#define AFTER_RH_67 1
+-#define AFTER_RH_6x 1
+-#define AFTER_RH_70 1
+-#define AFTER_RH_71 1
+-#define AFTER_RH_72 1
+-#define AFTER_RH_73 1
 -#endif
  
  /* Misc defines needed so source is same for all versions of Linux */
  #ifndef SDEV_TRANSPORT_OFFLINE
---- lin_tape-3.0.52/lin_tape_scsi_config.h~	2020-04-04 21:53:09.000000000 +0200
-+++ lin_tape-3.0.52/lin_tape_scsi_config.h	2020-04-04 21:56:46.600032193 +0200
-@@ -64,9 +64,6 @@
-     ("IBM Tape Drives and Libraries");
- MODULE_LICENSE("GPL");
- MODULE_VERSION("3.0.60");
--#if defined(SLESVERSION)
--MODULE_INFO(supported, "external");
--#endif // defined
- /* driver parameters */
- int support_dio = 1;
- module_param(support_dio, int, 0);
---- lin_tape-3.0.52/sgmp.c~	2020-03-05 19:43:09.000000000 +0100
-+++ lin_tape-3.0.52/sgmp.c	2020-04-04 21:57:56.793366544 +0200
-@@ -34,7 +34,7 @@
-  */
+diff -ur lin_tape-3.0.66/upper.c lin_tape-3.0.66-ifdefs/upper.c
+--- lin_tape-3.0.66/upper.c	2023-08-08 23:45:15.000000000 +0200
++++ lin_tape-3.0.66-ifdefs/upper.c	2023-12-25 23:05:43.253011166 +0100
+@@ -255,8 +255,8 @@
+ 			DBG_INFO("Sent to kernel cmd=0x%04X\n", ioctl_cmd);
+ #ifdef KERNELVERSION_5_14_0_70
+ 			return scsi_ioctl(sdev, ioctl_cmd, arg);
+-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5,14,0) && (LINUX_VERSION_CODE < KERNEL_VERSION(5, 14, 1) || defined(SLESSP5))
+-			return scsi_ioctl(sdev, filp->f_flags, ioctl_cmd, arg);
++#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5,15,0)
++			return scsi_ioctl(sdev, NULL, filp->f_flags, ioctl_cmd, arg);
+ #else
+ 			return scsi_ioctl(sdev, ioctl_cmd, arg);
+ #endif
+@@ -279,8 +279,8 @@
+ 	} else {
+ #ifdef KERNELVERSION_5_14_0_70
+ 		return scsi_ioctl(sdev, ioctl_cmd, arg);
+-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5,14,0) && (LINUX_VERSION_CODE < KERNEL_VERSION(5, 14, 1) || defined(SLESSP5))
+-		return scsi_ioctl(sdev, filp->f_flags, ioctl_cmd, arg);
++#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5,14,0)
++		return scsi_ioctl(sdev, NULL, filp->f_flags, ioctl_cmd, arg);
+ #else
+ 		return scsi_ioctl(sdev, ioctl_cmd, arg);
+ #endif		
+@@ -305,9 +305,9 @@
  
- #include <linux/version.h>
--#if !defined(SLESVERSION) && LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
-+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
- /*
-  *  History:
-  *  Started: Aug 9 by Lawrence Foard (entropy@world.std.com),
-@@ -3012,7 +3012,7 @@
- 	return 0;
- }
- #endif				/* CONFIG_SCSI_PROC_FS */
--#elif !defined(SLESVERSION) && LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,0)
-+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,0)
- static int sg_version_num = 30536;	/* 2 digits for each component */
- #define SG_VERSION_STR "3.5.36"
- 
-@@ -6026,7 +6026,7 @@
- }
- 
- #endif				/* CONFIG_SCSI_PROC_FS */
--#elif !defined(SLESVERSION) && LINUX_VERSION_CODE == KERNEL_VERSION(2,6,32)
-+#elif LINUX_VERSION_CODE == KERNEL_VERSION(2,6,32)
- static int sg_version_num = 30534;	/* 2 digits for each component */
- #define SG_VERSION_STR "3.5.34"
- 
---- lin_tape-3.0.52/stmp.c~	2020-03-05 19:43:09.000000000 +0100
-+++ lin_tape-3.0.52/stmp.c	2020-04-04 21:58:35.473367112 +0200
-@@ -42,7 +42,7 @@
- 
-  */
- #include <linux/version.h>
--#if !defined(SLESVERSION) && LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
-+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
- /*
-    SCSI Tape Driver for Linux version 1.1 and newer. See the accompanying
-    file Documentation/scsi/st.txt for more information.
-@@ -5108,7 +5108,7 @@
- 
- 	return 0;
- }
--#elif !defined(SLESVERSION) && LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,0)
-+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,0)
- #include <linux/module.h>
- #include <linux/fs.h>
- #include <linux/kernel.h>
-@@ -10137,7 +10137,7 @@
- 
- 	return 0;
- }
--#elif !defined(SLESVERSION) && LINUX_VERSION_CODE == KERNEL_VERSION(2,6,32)
-+#elif LINUX_VERSION_CODE == KERNEL_VERSION(2,6,32)
- #include <linux/module.h>
- #include <linux/fs.h>
- #include <linux/kernel.h>
---- lin_tape-3.0.52/upper.c~	2020-04-04 21:55:46.000000000 +0200
-+++ lin_tape-3.0.52/upper.c	2020-04-04 21:59:12.536700966 +0200
-@@ -273,7 +273,7 @@
- 	if (copy_from_user(pfo_cmd->scsi_cmd, hdr->cmdp, hdr->cmd_len))
- 		return -EFAULT;
- 
--#if LINUX_VERSION_CODE > KERNEL_VERSION(3,12,0) && (defined(SLESVERSION) || defined(UBUNTUVERSION))
-+#if LINUX_VERSION_CODE > KERNEL_VERSION(3,12,0)
+ #ifdef KERNELVERSION_5_14_0_70 
+ 	if (blk_verify_command(pfo_cmd->scsi_cmd, mode & FMODE_WRITE))
+-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5,14,0) && (LINUX_VERSION_CODE < KERNEL_VERSION(5, 14, 1) || defined(SLESSP5))
++#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5,15,0)
+ 	if (!scsi_cmd_allowed(pfo_cmd->scsi_cmd, mode & FMODE_WRITE))
+-#elif LINUX_VERSION_CODE > KERNEL_VERSION(3,12,0) && (defined(SLESVERSION) || defined(UBUNTUVERSION))
++#elif LINUX_VERSION_CODE > KERNEL_VERSION(3,12,0)
  	if (blk_verify_command(pfo_cmd->scsi_cmd, mode & FMODE_WRITE))
  #else
  	/* RHEL 6.4 and beyond */
-@@ -525,14 +525,12 @@
+@@ -564,14 +564,12 @@
  		/* SG_IO howto says that the shorter of the two wins */
  		iov_data_len = iov_length((struct iovec *)iov,
  					hdr->iovec_count);
@@ -269,24 +306,48 @@ diff -ur lin_tape-3.0.18/pfo.h lin_tape-3.0.18-ifdefs/pfo.h
  		pfo_cmd.buffer = iov;
  		pfo_cmd.bufflen = iov_data_len;
  		pfo_cmd.iov_count = hdr->iovec_count;
-@@ -622,7 +620,7 @@
- 	if (in_len && copy_from_user(buffer, sic->data + cmdlen, in_len))
- 		goto error;
+@@ -663,9 +661,9 @@
  
--#if LINUX_VERSION_CODE > KERNEL_VERSION(3,12,0) && (defined(SLESVERSION) || defined(UBUNTUVERSION))
-+#if LINUX_VERSION_CODE > KERNEL_VERSION(3,12,0)
+ #ifdef KERNELVERSION_5_14_0_70 
+ 	err = blk_verify_command(scsi_cmd, mode & FMODE_WRITE);
+-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5,14,0) && (LINUX_VERSION_CODE < KERNEL_VERSION(5, 14, 1) || defined(SLESSP5))
++#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5,15,0)
+ 	err = !scsi_cmd_allowed(scsi_cmd, mode & FMODE_WRITE);
+-#elif LINUX_VERSION_CODE > KERNEL_VERSION(3,12,0) && (defined(SLESVERSION) || defined(UBUNTUVERSION))
++#elif LINUX_VERSION_CODE > KERNEL_VERSION(3,12,0)
  	err = blk_verify_command(scsi_cmd, mode & FMODE_WRITE);
  #else
  	/* RHEL 6.4 and beyond */
---- lin_tape-3.0.52/intercept.c~	2020-03-05 19:43:09.000000000 +0100
-+++ lin_tape-3.0.52/intercept.c	2020-04-04 21:59:43.190034776 +0200
-@@ -2492,9 +2492,6 @@
- MODULE_LICENSE("GPL");
- MODULE_VERSION(PFO_VERSION_STR);
- MODULE_INFO(date, PFO_DATE_STR);
--#if defined(SLESVERSION)
--MODULE_INFO(supported, "external");
--#endif
- #if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,32)
- module_param(netbackup, int, 0444);
- MODULE_PARM_DESC(netbackup, "!=0 to use with NetBackup application");
+@@ -785,8 +783,8 @@
+ 			DBG_INFO("Sent to kernel cmd=0x%04X\n", ioctl_cmd);
+ #ifdef KERNELVERSION_5_14_0_70
+ 			return scsi_cmd_ioctl(q, disk, mode, ioctl_cmd, arg);
+-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5,14,0) && (LINUX_VERSION_CODE < KERNEL_VERSION(5, 14, 1) || defined(SLESSP5))
+-			return scsi_ioctl(sdev, mode, ioctl_cmd, arg);
++#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5,15,0)
++			return scsi_ioctl(sdev, disk, mode, ioctl_cmd, arg);
+ #else
+ 			return scsi_cmd_ioctl(q, disk, mode, ioctl_cmd, arg);
+ #endif
+@@ -809,8 +807,8 @@
+ 	} else {
+ #ifdef KERNELVERSION_5_14_0_70
+ 		return scsi_cmd_ioctl(q, disk, mode, ioctl_cmd, arg);
+-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5,14,0) && (LINUX_VERSION_CODE < KERNEL_VERSION(5, 14, 1) || defined(SLESSP5))
+-		return scsi_ioctl(sdev, mode, ioctl_cmd, arg);
++#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5,15,0)
++		return scsi_ioctl(sdev, disk, mode, ioctl_cmd, arg);
+ #else
+ 		return scsi_cmd_ioctl(q, disk, mode, ioctl_cmd, arg);
+ #endif
+@@ -963,8 +961,8 @@
+ 	} else {
+ #ifdef KERNELVERSION_5_14_0_70
+ 		return sg_scsi_ioctl(q, disk, mode, sic);
+-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5,14,0) && (LINUX_VERSION_CODE < KERNEL_VERSION(5, 14, 1) || defined(SLESSP5))
+-		return scsi_ioctl(sdev, mode, cmd_in, sic);
++#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5,15,0)
++		return scsi_ioctl(sdev, disk, mode, cmd_in, sic);
+ #else
+ 		return sg_scsi_ioctl(q, disk, mode, sic);
+ #endif
