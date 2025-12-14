@@ -17,7 +17,6 @@ Source0:	%{pname}-%{version}.tgz
 # Source0-md5:	86e337bd1cc2da752997d74685fc4ab5
 Source1:	%{pname}.fixlist
 Patch0:		use-module-dir.patch
-Patch1:		clean-ifdefs.patch
 Patch2:		kernel-6.15.patch
 Patch3:		kernel-6.16.patch
 # System Storage, Tape systems, Tape drivers and software, Tape device drivers (Linux)
