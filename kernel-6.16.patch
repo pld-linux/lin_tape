@@ -1,0 +1,14 @@
+--- lin_tape-3.0.71/lower.c~	2025-06-30 16:30:30.000000000 +0200
++++ lin_tape-3.0.71/lower.c	2025-12-14 16:22:27.593318201 +0100
+@@ -534,7 +534,10 @@
+ 			}
+ 		} else if (pfo_cmd->source == PFO_SOURCE_CMD_1 ||
+ 			   pfo_cmd->source == PFO_SOURCE_EXEC) {
+-			err = blk_rq_map_kern(sdev->request_queue,
++			err = blk_rq_map_kern(
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6,16,0)
++					sdev->request_queue,
++#endif
+ 					rq,
+ 					pfo_cmd->buffer,
+ 					pfo_cmd->bufflen,

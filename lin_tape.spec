@@ -5,19 +5,21 @@
 # nothing to be placed to debuginfo package
 %define		_enable_debug_packages	0
 
-%define		rel	2
+%define		rel	1
 %define		pname	lin_tape
 Summary:	IBM Tape SCSI Device Driver for Linux
 Name:		%{pname}%{_alt_kernel}
-Version:	3.0.66
+Version:	3.0.71
 Release:	%{rel}%{?_pld_builder:@%{_kernel_ver_str}}
 License:	GPL v2/LGPL
 Group:		Base/Kernel
 Source0:	%{pname}-%{version}.tgz
-# Source0-md5:	736c967d1d2a62023809b54f2328a9cc
+# Source0-md5:	86e337bd1cc2da752997d74685fc4ab5
 Source1:	%{pname}.fixlist
 Patch0:		use-module-dir.patch
 Patch1:		clean-ifdefs.patch
+Patch2:		kernel-6.15.patch
+Patch3:		kernel-6.16.patch
 # System Storage, Tape systems, Tape drivers and software, Tape device drivers (Linux)
 URL:		http://www.ibm.com/support/fixcentral/
 BuildRequires:	rpmbuild(macros) >= 1.701
@@ -65,8 +67,10 @@ compatible platforms.\
 %prep
 %setup -q -n %{pname}-%{version}
 %undos Makefile
-%patch -P 0 -p1
-%patch -P 1 -p1
+%patch -P0 -p1
+#patch -P 1 -p1
+%patch -P2 -p1
+%patch -P3 -p1
 
 install -p %{SOURCE1} .
 

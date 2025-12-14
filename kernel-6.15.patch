@@ -1,0 +1,193 @@
+--- lin_tape-3.0.71/lin_tape_ioctl_changer.c~	2025-06-30 16:30:30.000000000 +0200
++++ lin_tape-3.0.71/lin_tape_ioctl_changer.c	2025-12-14 16:15:12.749984881 +0100
+@@ -24,6 +24,11 @@
+ #include "lin_tape_scsi_tape.h"
+ #include <linux/delay.h>
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6,15,0)
++#define		RESERVE_6	RESERVE
++#define		RELEASE_6	RELEASE
++#endif
++
+ /*******************************************************************************
+ *                                                                              *
+ *  NAME: changer_inquiry_page                                                  *
+@@ -361,11 +366,11 @@
+ 	} /* if */
+ 
+ 	memset((*chgp)->cdb, '\0', MAX_CDB_SIZE);
+-	(*chgp)->cdb->cdb_release.op_code = RELEASE;
++	(*chgp)->cdb->cdb_release.op_code = RELEASE_6;
+ 	(*chgp)->buffer = NULL;
+ 	(*chgp)->buf_len = 0;
+ 	(*chgp)->cdb_len = CDB_GENERIC_6;
+-	(*chgp)->last_op = RELEASE;
++	(*chgp)->last_op = RELEASE_6;
+ 
+ 	rc = changer_send_scsi_cmd(chgp, compute_changer_timeout((*chgp)->chg_id,
+ 		ReleaseTimeOut), DMA_NONE, False, 0);
+@@ -409,11 +414,11 @@
+ 	} /* if */
+ 
+ 	memset((*chgp)->cdb, '\0', MAX_CDB_SIZE);
+-	(*chgp)->cdb->cdb_reserve.op_code = RESERVE;
++	(*chgp)->cdb->cdb_reserve.op_code = RESERVE_6;
+ 	(*chgp)->buffer = NULL;
+ 	(*chgp)->buf_len = 0;
+ 	(*chgp)->cdb_len = CDB_GENERIC_6;
+-	(*chgp)->last_op = RESERVE;
++	(*chgp)->last_op = RESERVE_6;
+ 
+ 	rc = changer_send_scsi_cmd(chgp, compute_changer_timeout((*chgp)->chg_id,
+ 		ReserveTimeOut), DMA_NONE, False, 0);
+@@ -2570,7 +2575,7 @@
+ 
+ 		if((*chgp)->curr_reserve_type != LinTapeNoReserve) {
+ 			DbgPrint(("lin_tape UNIT ATTN erp: re-reserve\n"));
+-			temp_rc = changer_send_erp_cmd((*chgp), RESERVE, 0, 0);
++			temp_rc = changer_send_erp_cmd((*chgp), RESERVE_6, 0, 0);
+ 			if(temp_rc != STATUS_SUCCESS) goto EXIT_LABEL;
+ 		} /* if */
+ 
+@@ -2954,7 +2959,7 @@
+ *  PARAMETERS:                                                                 *
+ *                                                                              *
+ *    chg: the changer for which to issue the command                           *
+-*    cmd: defined for INQUIRY, TEST_UNIT_READY, and RESERVE                    *
++*    cmd: defined for INQUIRY, TEST_UNIT_READY, and RESERVE_6                    *
+ *    update: if data has changed, update the descriptor                        *
+ *    count: nquiry page for which to issue the ERP                             *
+ *                                                                              *
+@@ -2978,7 +2983,7 @@
+ 		rc = changer_erp_tur(chg);
+ 		break;
+ 
+-	case RESERVE:
++	case RESERVE_6:
+ 		rc = changer_erp_reserve(chg);
+ 		break;
+ 
+@@ -3188,7 +3193,7 @@
+ 	} /* if */
+ 	memset((void*)tmp_cdb, '\0', MAX_CDB_SIZE);
+ 
+-	tmp_cdb->cdb_reserve.op_code = RESERVE;
++	tmp_cdb->cdb_reserve.op_code = RESERVE_6;
+ 
+ 	tcdb = (unchar*)tmp_cdb;
+ 
+--- lin_tape-3.0.71/lin_tape_ioctl_tape.c~	2025-06-30 16:30:30.000000000 +0200
++++ lin_tape-3.0.71/lin_tape_ioctl_tape.c	2025-12-14 16:17:07.923318210 +0100
+@@ -25,6 +25,11 @@
+ #include "lin_tape_scsi_tape.h"
+ #include <linux/delay.h>
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6,15,0)
++#define		RESERVE_6	RESERVE
++#define		RELEASE_6	RELEASE
++#endif
++
+ /*****************************************************************************
+  *                                                                           *
+  *              Tape Drive Ioctls                                            *
+@@ -1643,9 +1648,9 @@
+ 	} /* if */
+ 
+ 	memset(drv->cdb, '\0', MAX_CDB_SIZE);
+-	drv->cdb->cdb_release.op_code = RELEASE;
++	drv->cdb->cdb_release.op_code = RELEASE_6;
+ 	drv->cdb_len = CDB_GENERIC_6;
+-	drv->last_op = RELEASE;
++	drv->last_op = RELEASE_6;
+ 
+ 	drv->buffer = NULL;
+ 	drv->buf_len = 0;
+@@ -2292,7 +2297,7 @@
+ *                                                                              *
+ *  NAME: tape_reserve                                                          *
+ *                                                                              *
+-*  PURPOSE: Issue SCSI-2 RESERVE, opcode 0x16                                  *
++*  PURPOSE: Issue SCSI-2 RESERVE_6, opcode 0x16                                  *
+ *                                                                              *
+ *  PARAMETERS:                                                                 *
+ *                                                                              *
+@@ -2314,9 +2319,9 @@
+ 		goto EXIT_LABEL;
+ 	} /* if */
+ 	memset(drv->cdb, '\0', MAX_CDB_SIZE);
+-	drv->cdb->cdb_reserve.op_code = RESERVE;
++	drv->cdb->cdb_reserve.op_code = RESERVE_6;
+ 	drv->cdb_len = CDB_GENERIC_6;
+-	drv->last_op = RESERVE;
++	drv->last_op = RESERVE_6;
+ 	drv->buffer = NULL;
+ 	drv->buf_len = 0;
+ 
+@@ -4723,11 +4728,11 @@
+ 	if(drv) drv->wakeup_info = 0;
+ 
+ 	/* Change regular reserve to persistent reserve if necessary */
+-	if(cdb[0] == RESERVE && TP_RSV_PERSISTENT(drv)) {
++	if(cdb[0] == RESERVE_6 && TP_RSV_PERSISTENT(drv)) {
+ 		rc = tape_pass_thru_persistent_reserve(&drv, sense,
+ 			orig_sense_length, sense_avail, sense_length, fpfo);
+ 		goto EXIT_LABEL;
+-	} else if(cdb[0] == RELEASE && TP_RSV_PERSISTENT(drv)) {
++	} else if(cdb[0] == RELEASE_6 && TP_RSV_PERSISTENT(drv)) {
+ 		rc = tape_pass_thru_persistent_release(&drv, sense,
+ 			orig_sense_length, sense_avail, sense_length, fpfo);
+ 		goto EXIT_LABEL;
+@@ -5938,7 +5943,7 @@
+ 	} /* if */
+ 
+ 	if(!drv->cmd_in_open && !drv->cmd_wo_ua_erp &&
+-		(drv->last_op != RELEASE) &&
++		(drv->last_op != RELEASE_6) &&
+ 		(drv->sense_valid && drv->sense_data
+ 		&& drv->sense_data->sense_key == 6))
+ 		tape_unit_attent_erp(drv);
+@@ -7883,7 +7888,7 @@
+ 		rc = erp_inquiry(drv, last_timeout, count, sense_data);
+ 		break;
+ 
+-	case TEST_UNIT_READY: case RESERVE:
++	case TEST_UNIT_READY: case RESERVE_6:
+ 		rc = erp_tur_or_reserve(drv, command, sense_data);
+ 		break;
+ 
+@@ -8036,12 +8041,12 @@
+ *                                                                              *
+ *  NAME: erp_tur_or_reserve                                                    *
+ *                                                                              *
+-*  PURPOSE: Issue TUR or RESERVE as part of ERP processing                     *
++*  PURPOSE: Issue TUR or RESERVE_6 as part of ERP processing                     *
+ *                                                                              *
+ *  PARAMETERS:                                                                 *
+ *                                                                              *
+ *    drv: tape descriptor for the drive                                        *
+-*    command: TUR or RESERVE                                                   *
++*    command: TUR or RESERVE_6                                                   *
+ *    sense_data: caller-allocated buffer to receive sense data                 *
+ *                                                                              *
+ *  RETURNS: STATUS_SUCCESS or error code                                       *
+@@ -8064,7 +8069,7 @@
+ 	memset(tmp_cdb, '\0', MAX_CDB_SIZE);
+ 	if(command == TEST_UNIT_READY)
+ 		tmp_cdb->cdb_tur.op_code = TEST_UNIT_READY;
+-	else tmp_cdb->cdb_reserve.op_code = RESERVE;
++	else tmp_cdb->cdb_reserve.op_code = RESERVE_6;
+ 
+ 	tcdb = (unchar*)tmp_cdb;
+ 
+@@ -10214,9 +10219,9 @@
+ 	if(rc != STATUS_SUCCESS) goto EXIT_LABEL;
+ 
+ 	if(drv->curr_reserve_type == LinTapeReserve6) {
+-		rc = tape_send_erp_cmd(drv, RESERVE, 0, 0);
++		rc = tape_send_erp_cmd(drv, RESERVE_6, 0, 0);
+ 		while(rc == UNIT_ATTENTION)
+-			rc = tape_send_erp_cmd(drv, RESERVE, 0, 0);
++			rc = tape_send_erp_cmd(drv, RESERVE_6, 0, 0);
+ 		if(rc != STATUS_SUCCESS) goto EXIT_LABEL;
+ 	} else if(drv->curr_reserve_type == LinTapePersistentReserve
+ 		&& (asc == 0x29 && ascq == 0)) {
