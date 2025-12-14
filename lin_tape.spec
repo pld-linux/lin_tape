@@ -68,7 +68,6 @@ compatible platforms.\
 %setup -q -n %{pname}-%{version}
 %undos Makefile
 %patch -P0 -p1
-#patch -P 1 -p1
 %patch -P2 -p1
 %patch -P3 -p1
 
