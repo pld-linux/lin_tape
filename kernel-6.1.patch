@@ -1,0 +1,32 @@
+--- lin_tape-3.0.71/lin_tape_scsi_ioctl.h~	2025-06-30 16:30:30.000000000 +0200
++++ lin_tape-3.0.71/lin_tape_scsi_ioctl.h	2025-12-15 01:22:51.856651250 +0100
+@@ -46,6 +46,7 @@
+ #include <scsi/scsi.h>          /* scsi command definition, etc.   */
+ #include <scsi/scsi_ioctl.h>    /* support generial scsi ioctl call*/
+ #include <scsi/scsi_cmnd.h>
++#include <scsi/sg.h>
+ 
+ #include "lin_tape_tape.h"
+ 
+--- lin_tape-3.0.71/lower.c~	2025-12-15 01:06:34.000000000 +0100
++++ lin_tape-3.0.71/lower.c	2025-12-15 01:24:36.073317908 +0100
+@@ -276,7 +276,7 @@
+ 	/* Send the command */
+ 	if (pfo_cmd->source == PFO_SOURCE_PFO) {
+ 		/* SCSI Command from decide code */
+-#if LINUX_VERSION_CODE > KERNEL_VERSION(6,0,0) || defined (RHEL96)
++#if LINUX_VERSION_CODE > KERNEL_VERSION(6,2,0)
+                 result = scsi_execute_cmd(sdev, pfo_cmd->scsi_cmd,
+ 				pfo_cmd->data_direction==DMA_TO_DEVICE? REQ_OP_DRV_OUT:REQ_OP_DRV_IN,
+ 				pfo_cmd->buffer, pfo_cmd->bufflen, pfo_cmd->timeout, pfo_cmd->retries,
+--- lin_tape-3.0.71/upper.c~	2025-12-15 01:06:34.000000000 +0100
++++ lin_tape-3.0.71/upper.c	2025-12-15 01:25:05.333317909 +0100
+@@ -936,7 +936,7 @@
+ 		return pfo_scsi_execute_req(fdev_num, cmd, data_direction,
+ 			buffer, bufflen, sshdr, timeout, retries, resid);
+ 	} else {
+-#if LINUX_VERSION_CODE > KERNEL_VERSION(6,0,0) || defined(RHEL96)
++#if LINUX_VERSION_CODE > KERNEL_VERSION(6,2,0)
+                 return scsi_execute_cmd(sdev, cmd, data_direction==DMA_FROM_DEVICE?REQ_OP_DRV_IN:REQ_OP_DRV_OUT,
+                         buffer, bufflen, timeout, retries, NULL);
+ #else		

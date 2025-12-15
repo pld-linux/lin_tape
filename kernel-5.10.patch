@@ -1,0 +1,20 @@
+--- lin_tape-3.0.71/lin_tape_scsi_tape.c.orig	2025-06-30 16:30:30.000000000 +0200
++++ lin_tape-3.0.71/lin_tape_scsi_tape.c	2025-12-15 00:49:44.833317984 +0100
+@@ -11563,7 +11563,7 @@
+ 
+ 	memset(pages, '\0', drv->supported_sg_tablesize * sizeof(struct page*));
+ 
+-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,14,0)
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,10,0)
+ 	down_read(&current->mm->mmap_lock);
+ #else
+ 	down_read(&current->mm->mmap_sem);
+@@ -11586,7 +11586,7 @@
+ 	mapped_pages = get_user_pages(current, current->mm,
+ 		(ulong)user_location, number_pages, rw, 0, pages, NULL);
+ #endif
+-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,14,0)
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,10,0)
+ 	up_read(&current->mm->mmap_lock);
+ #else
+ 	up_read(&current->mm->mmap_sem);

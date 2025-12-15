@@ -17,8 +17,11 @@ Source0:	%{pname}-%{version}.tgz
 # Source0-md5:	86e337bd1cc2da752997d74685fc4ab5
 Source1:	%{pname}.fixlist
 Patch0:		use-module-dir.patch
-Patch2:		kernel-6.15.patch
-Patch3:		kernel-6.16.patch
+Patch1:		no-distro-defs.patch
+Patch2:		kernel-5.10.patch
+Patch3:		kernel-6.1.patch
+Patch4:		kernel-6.15.patch
+Patch5:		kernel-6.16.patch
 # System Storage, Tape systems, Tape drivers and software, Tape device drivers (Linux)
 URL:		http://www.ibm.com/support/fixcentral/
 BuildRequires:	rpmbuild(macros) >= 1.701
@@ -67,8 +70,11 @@ compatible platforms.\
 %setup -q -n %{pname}-%{version}
 %undos Makefile
 %patch -P0 -p1
+%patch -P1 -p1
 %patch -P2 -p1
 %patch -P3 -p1
+%patch -P4 -p1
+%patch -P5 -p1
 
 install -p %{SOURCE1} .
 
