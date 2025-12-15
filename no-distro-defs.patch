@@ -90,22 +90,3 @@
  	if (blk_verify_command(pfo_cmd->scsi_cmd, mode & FMODE_WRITE))
  #else
  	/* RHEL 6.4 and beyond */
---- lin_tape-3.0.71/lin_tape_scsi_tape.c~	2025-12-15 01:06:34.000000000 +0100
-+++ lin_tape-3.0.71/lin_tape_scsi_tape.c	2025-12-15 01:13:10.333317926 +0100
-@@ -11568,15 +11568,7 @@
- #else
- 	down_read(&current->mm->mmap_sem);
- #endif
--#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,0,0) || defined(RHEL96)
--        mapped_pages = get_user_pages((ulong)user_location, number_pages,
--                                              rw, pages);
--#elif LINUX_VERSION_CODE == KERNEL_VERSION(4,4,73) \
--	|| (LINUX_VERSION_CODE >= KERNEL_VERSION(4,4,92) && LINUX_VERSION_CODE < KERNEL_VERSION(4,4,103)) \
--	|| defined(SLESKERNEL_4_4_103_6) \
--	|| (LINUX_VERSION_CODE >= KERNEL_VERSION(4,4,114) && !defined(SLESSP2)) \
--	|| (LINUX_VERSION_CODE >= KERNEL_VERSION(5,3,0) && defined(SLESSP2)) \
--	|| defined (SLESKERNEL_4_4_103_94)
-+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,0,0)
- 	mapped_pages = get_user_pages((unsigned long)user_location, number_pages,
- 			                      rw, pages, NULL);
- #elif LINUX_VERSION_CODE >= KERNEL_VERSION(4,6,0)
