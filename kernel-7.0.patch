@@ -1,0 +1,296 @@
+diff -ur lin_tape-3.0.71/intercept.c lin_tape-3.0.71-kernel-7.0/intercept.c
+--- lin_tape-3.0.71/intercept.c	2025-06-30 16:30:30.000000000 +0200
++++ lin_tape-3.0.71-kernel-7.0/intercept.c	2026-04-25 17:15:56.931624121 +0200
+@@ -125,13 +125,19 @@
+ };
+ 
+ static struct scsi_driver pfo_template = {
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(7,0,0)
++	.probe	= NULL,
++	.remove	= NULL,
++#endif
+ #if LINUX_VERSION_CODE < KERNEL_VERSION(3,19,0)
+ 	.owner	= THIS_MODULE,
+ #endif
+ 	.gendrv	= {
+ 		.name	= "pfo",
++#if LINUX_VERSION_CODE < KERNEL_VERSION(7,0,0)
+ 		.probe	= NULL,
+ 		.remove	= NULL,
++#endif
+ /*#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
+ 		.groups = pfo_drv_groups,
+ #endif*/
+@@ -148,8 +154,13 @@
+ 	void (*sg_remove_dev)(struct device*);
+ #endif
+ 	void (*sg_switch)(struct device *, struct device *);
++#if LINUX_VERSION_CODE < KERNEL_VERSION(7,0,0)
+ 	int (*st_probe) (struct device *);
+ 	int (*st_remove) (struct device *);
++#else
++	int (*st_probe) (struct scsi_device *);
++	void (*st_remove) (struct scsi_device *);
++#endif
+ 	void (*st_switch)(struct device *, struct device *);
+ 	int (*join_add)(struct device *, struct class_interface *);
+ 	void (*join_remove)(struct device *, struct class_interface *);
+@@ -847,7 +858,11 @@
+ 	if (upper_device_callback.st_probe != NULL && pdev->scsitype == 1) {
+ 		DBG_DEBUG("Add dev pfo%d (%p) to st\n",
+ 					pfonum, get_realupper(pdev));
++#if LINUX_VERSION_CODE < KERNEL_VERSION(7,0,0)
+ 		i = upper_device_callback.st_probe(get_realupper(pdev)->parent);
++#else
++		i = upper_device_callback.st_probe(to_scsi_device(get_realupper(pdev)->parent));
++#endif
+ 		if (i >= 0) {
+ 			pdev->st_num = i;
+ 		} else {
+@@ -1030,13 +1045,21 @@
+ 
+ 	if (upper_device_callback.st_remove != NULL && pdev->scsitype == 1) {
+ 		DBG_DEBUG("remove device %d (%p) from st\n", id, get_realupper(pdev));
++#if LINUX_VERSION_CODE < KERNEL_VERSION(7,0,0)
+ 		upper_device_callback.st_remove(get_realupper(pdev)->parent);
++#else
++		upper_device_callback.st_remove(to_scsi_device(get_realupper(pdev)->parent));
++#endif
+ 		pdev->st_num = -1;
+ 	}
+ 	return 0;
+ }
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(7,0,0)
+ int pfo_register_st(struct device_driver *drv,
++#else
++int pfo_register_st(struct scsi_driver *drv,
++#endif
+ 	void (*path_switch_callback)(struct device *, struct device *))
+ {
+ 	upper_device_callback.st_probe = drv->probe;
+@@ -1055,7 +1078,11 @@
+ }
+ EXPORT_SYMBOL(pfo_register_st);
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(7,0,0)
+ void pfo_unregister_st(struct device_driver *drv)
++#else
++void pfo_unregister_st(struct scsi_driver *drv)
++#endif
+ {
+ 	read_lock(&pfo_devices_lock);
+ 	idr_for_each(&pfo_devices, remove_device_from_st, &REMOVE_ALL_TRUE);
+@@ -2001,7 +2028,11 @@
+ 		DBG_ERROR("pfo class registration failed\n");
+ 		goto init_pfo_class_create_errout;
+ 	}
++#if LINUX_VERSION_CODE < KERNEL_VERSION(7,0,0)
+ 	rc = scsi_register_driver(&pfo_template.gendrv);
++#else
++	rc = scsi_register_driver(&pfo_template);
++#endif
+ 	if (rc != 0) {
+ 		DBG_ERROR("pfo scsi_register_driver failed\n");
+ 		goto init_pfo_scsi_register_driver_errout;
+@@ -2055,7 +2086,11 @@
+ init_pfo_ioctol_errout:
+ 	stop_debug(&pfo_template.gendrv);
+ init_pfo_create_driver_errout:
++#if LINUX_VERSION_CODE < KERNEL_VERSION(7,0,0)
+ 	scsi_unregister_driver(&pfo_template.gendrv);
++#else
++	scsi_unregister_driver(&pfo_template);
++#endif
+ 
+ init_pfo_scsi_register_driver_errout:
+ 	class_destroy(pfo_sysfs_class);
+@@ -2528,7 +2563,11 @@
+ 	stop_debug(&pfo_template.gendrv);
+ 	driver_remove_file(&pfo_template.gendrv, &driver_attr_ctrl);
+ 	driver_remove_file(&pfo_template.gendrv, &driver_attr_pfo_version);
++#if LINUX_VERSION_CODE < KERNEL_VERSION(7,0,0)
+ 	scsi_unregister_driver(&pfo_template.gendrv);
++#else
++	scsi_unregister_driver(&pfo_template);
++#endif
+ 	class_destroy(pfo_sysfs_class);
+ }
+ 
+diff -ur lin_tape-3.0.71/lin_tape_scsi_config.c lin_tape-3.0.71-kernel-7.0/lin_tape_scsi_config.c
+--- lin_tape-3.0.71/lin_tape_scsi_config.c	2025-06-30 16:30:30.000000000 +0200
++++ lin_tape-3.0.71-kernel-7.0/lin_tape_scsi_config.c	2026-04-25 17:15:56.930945441 +0200
+@@ -1497,7 +1497,11 @@
+ 	DbgPrint(("lin_tape: lin_tape is registered under major number %d\n",
+ 		lin_tape_major));
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(7,0,0)
+ 	rc = scsi_register_driver(&lin_tape_driver.gendrv);
++#else
++	rc = scsi_register_driver(&lin_tape_driver);
++#endif
+ 	if(rc != STATUS_SUCCESS) {
+ 		printk("lin_tape: scsi_register_driver failed.\n");
+ 		goto EXIT_LABEL;
+@@ -1625,7 +1629,11 @@
+ 		unregister_chrdev_region(*first_dev, LinTapeMaxCount);
+ 
+ 	if(driver_regd)
++#if LINUX_VERSION_CODE < KERNEL_VERSION(7,0,0)
+ 		scsi_unregister_driver(&lin_tape_driver.gendrv);
++#else
++		scsi_unregister_driver(&lin_tape_driver);
++#endif
+ 
+ 	if(lin_tape_class_allocd) {
+ 		class_destroy(lin_tape_class);
+@@ -1736,7 +1744,11 @@
+ 	WRITE_UNLOCK(&changer_des_lock);
+ 
+ 	DbgPrint(("lin_tape: unregister_driver...\n"));
++#if LINUX_VERSION_CODE < KERNEL_VERSION(7,0,0)
+ 	scsi_unregister_driver(&lin_tape_driver.gendrv);
++#else
++	scsi_unregister_driver(&lin_tape_driver);
++#endif
+ 	DbgPrint(("lin_tape: unregister_driver done.\n"));
+ 
+ 	lin_tape_remove_proc();
+@@ -1840,11 +1852,19 @@
+ *                                                                              *
+ *******************************************************************************/
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(7,0,0)
+ static int lin_tape_probe(struct device *dev)
+ {
+ 	if(!lin_tape_supported_device(to_scsi_device(dev))) return -ENODEV;
+ 
+ 	return 0;
++#else
++static int lin_tape_probe(struct scsi_device *dev)
++{
++	if(!lin_tape_supported_device(dev)) return -ENODEV;
++
++	return 0;
++#endif
+ 
+ } /* lin_tape_probe() */
+ 
+@@ -1862,11 +1882,16 @@
+ *                                                                              *
+ *******************************************************************************/
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(7,0,0)
+ static int lin_tape_remove(struct device *dev)
+ {
+ 	if(!lin_tape_supported_device(to_scsi_device(dev))) return -ENODEV;
+ 
+ 	return 0;
++#else
++static void lin_tape_remove(struct scsi_device *dev)
++{
++#endif
+ 
+ } /* lin_tape_remove() */
+ 
+diff -ur lin_tape-3.0.71/lin_tape_scsi_config.h lin_tape-3.0.71-kernel-7.0/lin_tape_scsi_config.h
+--- lin_tape-3.0.71/lin_tape_scsi_config.h	2025-06-30 16:30:30.000000000 +0200
++++ lin_tape-3.0.71-kernel-7.0/lin_tape_scsi_config.h	2026-04-25 17:15:56.931466981 +0200
+@@ -401,9 +401,18 @@
+ 
+ 
+ /* scsi driver template */
++#if LINUX_VERSION_CODE < KERNEL_VERSION(7,0,0)
+ static int lin_tape_probe(struct device *dev);
+ static int lin_tape_remove(struct device *dev);
++#else
++static int lin_tape_probe(struct scsi_device *dev);
++static void lin_tape_remove(struct scsi_device *dev);
++#endif
+ static struct scsi_driver lin_tape_driver = {
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(7,0,0)
++	.probe = lin_tape_probe,
++	.remove = lin_tape_remove,
++#endif
+ #if LINUX_VERSION_CODE < KERNEL_VERSION(3,19,0)
+ 	.owner = THIS_MODULE,
+ #endif
+@@ -412,8 +421,10 @@
+ #if LINUX_VERSION_CODE >= KERNEL_VERSION(4,4,21)
+ 		.owner			= THIS_MODULE,
+ #endif
++#if LINUX_VERSION_CODE < KERNEL_VERSION(7,0,0)
+ 		   .probe = lin_tape_probe,
+ 		   .remove = lin_tape_remove,
++#endif
+ #if LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
+ 		   .groups = lin_tape_drv_groups,
+ #endif
+diff -ur lin_tape-3.0.71/pfo.h lin_tape-3.0.71-kernel-7.0/pfo.h
+--- lin_tape-3.0.71/pfo.h	2025-06-30 16:30:30.000000000 +0200
++++ lin_tape-3.0.71-kernel-7.0/pfo.h	2026-04-25 17:15:56.932913353 +0200
+@@ -24,6 +24,9 @@
+ #include "apfo.h"
+ #include <scsi/scsi_ioctl.h>
+ #include <scsi/scsi_common.h>
++#include <scsi/scsi_driver.h>	/* struct scsi_driver; to_scsi_driver;        *
++				 * scsi_register/unregister_driver,           *
++				 * scsi_register/unregister_interface         */
+ #include <linux/version.h>
+ #include <linux/blk-mq.h>
+ /* The intent of the following defines is that the code
+@@ -256,9 +259,15 @@
+ int pfo_register_sg(struct class_interface *intf,
+ 				void (*)(struct device *, struct device *));
+ void pfo_unregister_sg(struct class_interface *intf);
++#if LINUX_VERSION_CODE < KERNEL_VERSION(7,0,0)
+ int pfo_register_st(struct device_driver *drv,
+ 				void (*)(struct device *, struct device *));
+ void pfo_unregister_st(struct device_driver *drv);
++#else
++int pfo_register_st(struct scsi_driver *drv,
++				void (*)(struct device *, struct device *));
++void pfo_unregister_st(struct scsi_driver *drv);
++#endif
+ int pfo_register_sf(struct join_class_interface *intf);
+ void pfo_unregister_sf(void);
+ void pfo_failover_device(unsigned char* identifier, unsigned char enabled);
+diff -ur lin_tape-3.0.71/stmp.c lin_tape-3.0.71-kernel-7.0/stmp.c
+--- lin_tape-3.0.71/stmp.c	2025-06-30 16:30:30.000000000 +0200
++++ lin_tape-3.0.71-kernel-7.0/stmp.c	2026-04-25 17:15:56.932371823 +0200
+@@ -4642,7 +4642,11 @@
+ 		goto err_class;
+ 	}
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(7,0,0)
+ 	err = pfo_register_st(&st_template.gendrv, switch_active_path);
++#else
++	err = pfo_register_st(&st_template, switch_active_path);
++#endif
+ 	if (err)
+ 		goto err_chrdev;
+ 
+@@ -9692,7 +9696,11 @@
+ 		goto err_class;
+ 	}
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(7,0,0)
+ 	err = pfo_register_st(&st_template.gendrv, switch_active_path);
++#else
++	err = pfo_register_st(&st_template, switch_active_path);
++#endif
+ 	if (err)
+ 		goto err_chrdev;
+ 
+@@ -14586,7 +14594,11 @@
+ 		goto err_class;
+ 	}
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(7,0,0)
+ 	err = pfo_register_st(&st_template.gendrv, switch_active_path);
++#else
++	err = pfo_register_st(&st_template, switch_active_path);
++#endif
+ 	if (err)
+ 		goto err_chrdev;
+ 
