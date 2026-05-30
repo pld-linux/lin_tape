@@ -5,7 +5,7 @@
 # nothing to be placed to debuginfo package
 %define		_enable_debug_packages	0
 
-%define		rel	2
+%define		rel	3
 %define		pname	lin_tape
 Summary:	IBM Tape SCSI Device Driver for Linux
 Name:		%{pname}%{_alt_kernel}
@@ -34,7 +34,7 @@ The IBM Tape Device Driver, lin_tape, product is a device driver that
 provides attachment for the IBM TotalStorage and System Storage tape
 devices to Linux compatible platforms.
 
-%define	kernel_pkg()\
+%define	kernel_pkg() \
 %package -n kernel%{_alt_kernel}-scsi-lin_tape\
 Summary:	IBM Tape SCSI Device Driver for Linux\
 Release:	%{rel}@%{_kernel_ver_str}\
@@ -60,7 +60,7 @@ compatible platforms.\
 /lib/modules/%{_kernel_ver}/kernel/drivers/scsi/lin_tape.ko*\
 %{nil}
 
-%define build_kernel_pkg()\
+%define build_kernel_pkg() \
 %build_kernel_modules -m lin_tape\
 %install_kernel_modules -D installed -m lin_tape -d kernel/drivers/scsi\
 %{nil}
