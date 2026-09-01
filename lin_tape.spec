@@ -23,6 +23,7 @@ Patch3:		kernel-6.1.patch
 Patch4:		kernel-6.15.patch
 Patch5:		kernel-6.16.patch
 Patch6:		kernel-7.0.patch
+Patch7:		no-strncpy.patch
 # System Storage, Tape systems, Tape drivers and software, Tape device drivers (Linux)
 URL:		http://www.ibm.com/support/fixcentral/
 BuildRequires:	rpmbuild(macros) >= 1.701
@@ -77,6 +78,7 @@ compatible platforms.\
 %patch -P4 -p1
 %patch -P5 -p1
 %patch -P6 -p1
+%patch -P7 -p1
 
 install -p %{SOURCE1} .
 

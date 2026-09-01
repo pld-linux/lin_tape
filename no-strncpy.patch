@@ -1,0 +1,22 @@
+--- lin_tape-3.0.71/resolve_ibm_hp.c~	2025-06-30 16:30:30.000000000 +0200
++++ lin_tape-3.0.71/resolve_ibm_hp.c	2026-09-02 00:15:27.329906823 +0200
+@@ -992,7 +992,7 @@
+ 	if (size >= MAX_SIZE) {
+ 		size = MAX_SIZE-1;
+ 	}
+-	strncpy(string, in_string, size);
++	strscpy(string, in_string, size);
+ 	string[size] = '\0';
+ 	if (string[size-1] == '\n') {
+ 		string[size-1] = '\0';
+--- lin_tape-3.0.71/fo_util.c~	2025-06-30 16:30:30.000000000 +0200
++++ lin_tape-3.0.71/fo_util.c	2026-09-02 00:15:56.166538201 +0200
+@@ -162,7 +162,7 @@
+ 			strcpy(debug_buffer+debug_tail, tmp);
+ 			debug_tail += count;
+ 		} else {
+-			strncpy(debug_buffer+debug_tail, tmp,
++			strscpy(debug_buffer+debug_tail, tmp,
+ 					DEBUG_BUFFER_SIZE-1-debug_tail);
+ 			debug_buffer[DEBUG_BUFFER_SIZE-1] = '\0';
+ 			strcpy(debug_buffer,
